@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>BED WARS 3D</title>
+<style>
+  html, body { margin:0; padding:0; overflow:hidden; background:#7ec8e3; font-family:'Segoe UI',Arial,sans-serif; user-select:none; }
+  canvas { display:block; }
+
+  #crosshair { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:20px; height:20px; pointer-events:none; z-index:10; }
+  #crosshair::before, #crosshair::after { content:''; position:absolute; background:#fff; opacity:0.9; box-shadow:0 0 3px #000; }
+  #crosshair::before { left:50%; top:0; width:2px; height:100%; transform:translateX(-1px); }
+  #crosshair::after { top:50%; left:0; height:2px; width:100%; transform:translateY(-1px); }
+
+  #hud { position:absolute; top:16px; left:16px; color:#fff; z-index:10; text-shadow:0 0 5px rgba(0,0,0,0.9); font-size:15px; line-height:1.7; background:rgba(0,0,0,0.35); padding:10px 14px; border-radius:6px; }
+  #hud b { color:#ffcc00; }
+  .resIron { color:#dcdcdc; font-weight:bold; }
+  .resGold { color:#ffd23f; font-weight:bold; }
+  .resDiamond { color:#5ff2f2; font-weight:bold; }
+
+  #teamStatus { position:absolute; top:16px; right:16px; color:#fff; z-index:10; text-align:right; font-size:14px; text-shadow:0 0 4px #000; background:rgba(0,0,0,0.35); padding:10px 14px; border-radius:6px; }
+  #teamStatus div { margin-bottom:4px; }
+  .bedAlive::before { content:'🛏 '; }
+  .bedDead { color:#888; text-decoration:line-through; }
+  .bedDead::before { content:'💥 '; }
+
+  #healthBarWrap { position:absolute; bottom:24px; left:16px; width:240px; height:22px; border:2px solid #fff; z-index:10; background:rgba(0,0,0,0.4); border-radius:3px; overflow:hidden; }
+  #healthBar { height:100%; width:100%; background:linear-gradient(90deg,#ff3030,#ff8a00); transition:width .15s; }
+
+  #hotbar { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:10; }
+  .slot { width:52px; height:52px; background:rgba(0,0,0,0.45); border:2px solid #555; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; position:relative; }
+  .slot.active { border-color:#ffcc00; box-shadow:0 0 8px #ffcc00; }
+  .slot .label { position:absolute; bottom:2px; right:4px; font-size:10px; color:#ccc; }
+
+  #blockCount { position:absolute; bottom:80px; left:50%; transform:translateX(-50%); color:#fff; z-index:10; font-size:13px; text-shadow:0 0 4px #000; }
+  #hint { position:absolute; bottom:110px; left:50%; transform:translateX(-50%); color:#fff; z-index:10; font-size:13px; text-shadow:0 0 4px #000; opacity:0.85; }
+
+  #shopPanel {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:30;
+    background:rgba(20,22,30,0.96); border:2px solid #ffcc00; border-radius:10px; padding:24px 30px;
+    color:#fff; display:none; min-width:400px; max-height:80vh; overflow-y:auto;
+  }
+  #shopPanel h2 { color:#ffcc00; margin-top:0; text-align:center; letter-spacing:2px; }
+  .shopItem { display:flex; justify-content:space-between; align-items:center; padding:10px 6px; border-bottom:1px solid #333; }
+  .shopItem:last-child { border-bottom:none; }
+  .shopItem div.name { font-size:15px; }
+  .shopItem div.cost { font-size:13px; color:#ccc; }
+  .shopItem button { padding:8px 16px; background:#ffcc00; border:none; border-radius:4px; cursor:pointer; font-weight:bold; }
+  .shopItem button:disabled { background:#555; color:#999; cursor:not-allowed; }
+  .shopItem button:hover:not(:disabled) { background:#fff; }
+  #shopClose { margin-top:16px; width:100%; padding:10px; background:#444; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold; }
+  #shopClose:hover { background:#666; }
+
+  #blocker { position:absolute; inset:0; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:20; flex-direction:column; text-align:center; color:#fff; }
+  #blocker h1 { color:#ffcc00; font-size:42px; margin-bottom:6px; text-shadow:0 0 14px #ffcc00; letter-spacing:3px; }
+  #blocker p { max-width:560px; line-height:1.6; color:#ccc; font-size:14px; }
+  #startBtn, #restartBtn { margin-top:18px; padding:14px 38px; font-size:20px; cursor:pointer; background:#ffcc00; border:none; border-radius:4px; font-weight:bold; letter-spacing:2px; }
+  #startBtn:hover, #restartBtn:hover { background:#fff; }
+  #gameOverBox, #winBox { display:none; }
+  #gameOverBox h1 { color:#ff3030; text-shadow:0 0 14px #ff3030; }
+  #winBox h1 { color:#4aff6a; text-shadow:0 0 14px #4aff6a; }
+
+  #hitFlash { position:absolute; inset:0; background:radial-gradient(circle,transparent 40%,#8a0000 100%); opacity:0; pointer-events:none; z-index:15; transition:opacity .1s; }
+  #killfeed { position:absolute; top:120px; right:16px; color:#fff; z-index:10; text-align:right; font-size:13px; text-shadow:0 0 4px #000; }
+  #killfeed div { opacity:0; transition:opacity .3s; margin-bottom:3px; }
+</style>
+</head>
+<body>
+
+<div id="hitFlash"></div>
+<div id="crosshair"></div>
+
+<div id="hud">
+  <span class="resIron">⛏ Fer : <b id="ironCount">0</b></span><br>
+  <span class="resGold">💰 Or : <b id="goldCount">0</b></span><br>
+  <span class="resDiamond">💎 Diamant : <b id="diamondCount">0</b></span><br>
+  Éliminations : <b id="killCount">0</b>
+</div>
+
+<div id="teamStatus">
+  <div id="statusPlayer" class="bedAlive">Ton lit</div>
+  <div id="statusRed" class="bedAlive">Équipe Rouge</div>
+  <div id="statusGreen" class="bedAlive">Équipe Verte</div>
+</div>
+
+<div id="killfeed"></div>
+<div id="healthBarWrap"><div id="healthBar"></div></div>
+
+<div id="hotbar">
+  <div class="slot active" id="slot1">⚔️<span class="label">1</span></div>
+  <div class="slot" id="slot2">🏹<span class="label">2</span></div>
+  <div class="slot" id="slot3">🧱<span class="label">3</span></div>
+</div>
+<div id="blockCount">Blocs : <b id="woolCount">0</b></div>
+<div id="hint">Clic gauche : casser/attaquer — Clic droit : construire — B : boutique — 1/2/3 : changer d'objet</div>
+
+<div id="shopPanel">
+  <h2>🛒 BOUTIQUE</h2>
+  <div class="shopItem">
+    <div><div class="name">Laine x16</div><div class="cost">4 ⛏ Fer</div></div>
+    <button id="buyWool">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Épée en fer</div><div class="cost">8 ⛏ Fer</div></div>
+    <button id="buyIronSword">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Épée en diamant</div><div class="cost">6 💰 Or</div></div>
+    <button id="buyDiamondSword">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Épée légendaire</div><div class="cost">3 💎 Diamant</div></div>
+    <button id="buyLegendSword">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Arc</div><div class="cost">10 💰 Or</div></div>
+    <button id="buyBow">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Armure (+50 PV max)</div><div class="cost">8 💰 Or</div></div>
+    <button id="buyArmor">Acheter</button>
+  </div>
+  <div class="shopItem">
+    <div><div class="name">Armure légendaire (+100 PV max)</div><div class="cost">3 💎 Diamant</div></div>
+    <button id="buyLegendArmor">Acheter</button>
+  </div>
+  <button id="shopClose">FERMER (B)</button>
+</div>
+
+<div id="blocker">
+  <div id="startBox">
+    <h1>BED WARS 3D</h1>
+    <p>
+      Protège ton lit, détruis ceux des équipes adverses, mine le fer et l'or sur ton île,
+      et fonce vers l'îlot central pour le précieux <b style="color:#5ff2f2">diamant</b> !<br><br>
+      <b>ZQSD</b> déplacement — <b>Espace</b> sauter — <b>Souris</b> viser<br>
+      <b>Clic gauche</b> casser/attaquer — <b>Clic droit</b> poser un bloc — <b>B</b> boutique — <b>1/2/3</b> objet
+    </p>
+    <button id="startBtn">JOUER</button>
+  </div>
+  <div id="gameOverBox">
+    <h1>ÉLIMINÉ</h1>
+    <p>Ton lit est détruit et tu es tombé au combat.<br>Éliminations : <b id="finalKills" style="color:#ffcc00;">0</b></p>
+    <button id="restartBtn">REJOUER</button>
+  </div>
+  <div id="winBox">
+    <h1>VICTOIRE !</h1>
+    <p>Toutes les équipes adverses sont éliminées.<br>Éliminations : <b id="finalKillsWin" style="color:#4aff6a;">0</b></p>
+    <button id="restartBtnWin">REJOUER</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ================= SCENE =================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fd3f0);
+scene.fog = new THREE.Fog(0x8fd3f0, 45, 170);
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+scene.add(new THREE.HemisphereLight(0xbfe0ff, 0x3f5a2f, 1.0));
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.15);
+sun.position.set(45,65,25);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-90; sun.shadow.camera.right=90;
+sun.shadow.camera.top=90; sun.shadow.camera.bottom=-90;
+scene.add(sun);
+
+// ================= PROCEDURAL VOXEL TEXTURES (Minecraft-style blocky look) =================
+function makeVoxelTexture(baseColor, variants, noiseAmount){
+  const c = document.createElement('canvas');
+  c.width = 16; c.height = 16;
+  const ctx = c.getContext('2d');
+  const [r,g,b] = baseColor;
+  for (let y=0;y<16;y++){
+    for (let x=0;x<16;x++){
+      const n = (Math.random()-0.5)*noiseAmount;
+      ctx.fillStyle = `rgb(${Math.min(255,Math.max(0,r+n))},${Math.min(255,Math.max(0,g+n))},${Math.min(255,Math.max(0,b+n))})`;
+      ctx.fillRect(x,y,1,1);
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+const TEX = {
+  grass: makeVoxelTexture([90,168,74], null, 26),
+  dirt: makeVoxelTexture([120,90,60], null, 22),
+  stonePlayer: makeVoxelTexture([63,127,221], null, 20),
+  stoneRed: makeVoxelTexture([216,68,63], null, 20),
+  stoneGreen: makeVoxelTexture([79,191,95], null, 20),
+  wool: makeVoxelTexture([63,127,221], null, 14),
+  wood: makeVoxelTexture([120,80,45], null, 18),
+  neutral: makeVoxelTexture([150,150,160], null, 20)
+};
+function texMat(tex, extra){ return new THREE.MeshStandardMaterial(Object.assign({ map:tex, roughness:0.9 }, extra||{})); }
+
+// ================= VOXEL HELPERS =================
+const VOX = 2;
+function texturedBox(w,h,d,tex,x,y,z,repeat){
+  const geo = new THREE.BoxGeometry(w,h,d);
+  const t = tex.clone(); t.needsUpdate = true;
+  if (repeat) t.repeat.set(repeat[0], repeat[1]);
+  const m = new THREE.Mesh(geo, texMat(t));
+  m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true;
+  scene.add(m); return m;
+}
+
+// ================= ISLANDS =================
+const TEAM_COLORS = { player:0x3f7fdd, red:0xd8443f, green:0x4fbf5f };
+function buildIsland(cx, cz, stoneTex){
+  texturedBox(20,2,20, TEX.grass, cx,-1,cz, [6,6]);
+  texturedBox(20,1,20, TEX.dirt, cx,-1.9,cz, [6,6]);
+  [[-9,-9],[9,-9],[-9,9],[9,9]].forEach(([dx,dz])=>{
+    texturedBox(1.6,4,1.6, stoneTex, cx+dx, 1, cz+dz, [1,2]);
+  });
+}
+buildIsland(0,0, TEX.stonePlayer);
+buildIsland(-50,0, TEX.stoneRed);
+buildIsland(50,0, TEX.stoneGreen);
+
+// Central neutral diamond islet
+const MID = { x:0, z:-34 };
+texturedBox(10,2,10, TEX.neutral, MID.x,-1,MID.z, [3,3]);
+texturedBox(1.4,3,1.4, TEX.neutral, MID.x,0.5,MID.z-4, [1,1.5]);
+texturedBox(1.4,3,1.4, TEX.neutral, MID.x,0.5,MID.z+4, [1,1.5]);
+
+// ================= CLOUDS (atmosphere) =================
+const cloudMat = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:1, transparent:true, opacity:0.85 });
+const clouds = [];
+for (let i=0;i<14;i++){
+  const g = new THREE.Group();
+  const parts = 3+Math.floor(Math.random()*3);
+  for (let j=0;j<parts;j++){
+    const s = new THREE.Mesh(new THREE.BoxGeometry(6+Math.random()*4,2,5+Math.random()*3), cloudMat);
+    s.position.set(j*5 + (Math.random()-0.5)*2, Math.random()*1, (Math.random()-0.5)*3);
+    g.add(s);
+  }
+  g.position.set((Math.random()-0.5)*220, 38+Math.random()*14, (Math.random()-0.5)*220);
+  scene.add(g);
+  clouds.push({ g, speed: 0.6+Math.random()*0.8 });
+}
+
+// ================= BED BUILDER =================
+function buildBed(cx,cz, color, facing){
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2,0.6,4), texMat(TEX.wood.clone()));
+  base.position.y = 0.3;
+  base.castShadow = true;
+  group.add(base);
+  const blanket = new THREE.Mesh(new THREE.BoxGeometry(2.1,0.3,3), new THREE.MeshStandardMaterial({ color, roughness:0.8 }));
+  blanket.position.set(0,0.65,-0.3);
+  blanket.castShadow = true;
+  group.add(blanket);
+  const pillow = new THREE.Mesh(new THREE.BoxGeometry(1.8,0.4,0.8), new THREE.MeshStandardMaterial({ color:0xffffff }));
+  pillow.position.set(0,0.75,1.5);
+  group.add(pillow);
+  group.position.set(cx,0.1,cz);
+  group.rotation.y = facing;
+  scene.add(group);
+  return group;
+}
+
+const teams = {
+  player: { center:{x:0,z:0}, bed: buildBed(0,-8, TEAM_COLORS.player, 0), bedHP:100, bedAlive:true, bots:[] },
+  red: { center:{x:-50,z:0}, bed: buildBed(-50,8, TEAM_COLORS.red, Math.PI), bedHP:100, bedAlive:true, bots:[] },
+  green: { center:{x:50,z:0}, bed: buildBed(50,8, TEAM_COLORS.green, Math.PI), bedHP:100, bedAlive:true, bots:[] }
+};
+
+// ================= LABEL SPRITES =================
+function makeLabel(text, color){
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0,0,256,64);
+  ctx.font = 'bold 30px Segoe UI';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 34);
+  const tex = new THREE.CanvasTexture(c);
+  const mat = new THREE.SpriteMaterial({ map:tex, transparent:true });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(3.2,0.8,1);
+  return sprite;
+}
+
+// ================= RESOURCE GENERATORS =================
+const groundItems = [];
+const ironSpawn = { x:0, z:0, y:0.5 };
+const goldSpawn = { x:6, z:0, y:0.5 };
+const diamondSpawn = { x:MID.x, z:MID.z, y:0.8 };
+
+texturedBox(1.4,0.3,1.4, TEX.dirt, ironSpawn.x, -0.85, ironSpawn.z, [1,1]);
+texturedBox(1.4,0.3,1.4, TEX.dirt, goldSpawn.x, -0.85, goldSpawn.z, [1,1]);
+texturedBox(1.6,0.3,1.6, TEX.neutral, diamondSpawn.x, -0.85, diamondSpawn.z, [1,1]);
+
+const ironLabel = makeLabel('FER', '#dddddd'); ironLabel.position.set(ironSpawn.x,2.2,ironSpawn.z); scene.add(ironLabel);
+const goldLabel = makeLabel('OR', '#ffd23f'); goldLabel.position.set(goldSpawn.x,2.2,goldSpawn.z); scene.add(goldLabel);
+const diamondLabel = makeLabel('DIAMANT (OR BLANC)', '#5ff2f2'); diamondLabel.position.set(diamondSpawn.x,2.4,diamondSpawn.z); scene.add(diamondLabel);
+
+function spawnResource(type){
+  const cap = type==='iron' ? 8 : type==='gold' ? 4 : 3;
+  const existing = groundItems.filter(g=>g.type===type).length;
+  if (existing >= cap) return;
+  const spot = type==='iron' ? ironSpawn : type==='gold' ? goldSpawn : diamondSpawn;
+  const color = type==='iron' ? 0xdcdcdc : type==='gold' ? 0xffd23f : 0x5ff2f2;
+  const size = type==='diamond' ? 0.45 : 0.35;
+  const mat = new THREE.MeshStandardMaterial({ color, metalness:0.5, roughness:0.25, emissive: type==='diamond'?0x1a6a6a:0x000000, emissiveIntensity: type==='diamond'?0.6:0 });
+  const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(size), mat);
+  mesh.position.set(spot.x + (Math.random()-0.5)*1.4, 0.6, spot.z + (Math.random()-0.5)*1.4);
+  mesh.castShadow = true;
+  scene.add(mesh);
+  groundItems.push({ mesh, type, spinT: Math.random()*10 });
+}
+let ironTimer=0, goldTimer=0, diamondTimer=5;
+
+// ================= BOTS =================
+function buildBot(color){
+  const skin = new THREE.MeshStandardMaterial({ color:0xf0c49a, roughness:0.7 });
+  const uni = new THREE.MeshStandardMaterial({ color, roughness:0.65 });
+  const root = new THREE.Group();
+  const torsoGroup = new THREE.Group();
+  torsoGroup.position.y = 1.5;
+  root.add(torsoGroup);
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.1,0.5), uni);
+  torso.castShadow = true;
+  torsoGroup.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32,10,10), skin);
+  head.position.y = 0.85;
+  head.castShadow = true;
+  torsoGroup.add(head);
+  const armL = new THREE.Mesh(new THREE.BoxGeometry(0.24,0.85,0.24), uni);
+  armL.position.set(-0.52,0.2,0); armL.castShadow=true;
+  torsoGroup.add(armL);
+  const armR = armL.clone(); armR.position.x = 0.52;
+  torsoGroup.add(armR);
+  const legL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.9,0.3), new THREE.MeshStandardMaterial({ color:0x333333 }));
+  legL.position.set(-0.22,0.75,0); legL.castShadow=true;
+  root.add(legL);
+  const legR = legL.clone(); legR.position.x = 0.22;
+  root.add(legR);
+  scene.add(root);
+  return { root, torsoGroup, head, torso, legL, legR, walkPhase: Math.random()*10 };
+}
+
+function spawnBot(teamKey){
+  const t = teams[teamKey];
+  const color = TEAM_COLORS[teamKey];
+  const parts = buildBot(color);
+  const angle = Math.random()*Math.PI*2;
+  const r = 3 + Math.random()*3;
+  parts.root.position.set(t.center.x + Math.cos(angle)*r, 0, t.center.z + Math.sin(angle)*r);
+  const bot = {
+    ...parts, team:teamKey, hp:80, maxHP:80, alive:true, dying:false, deathT:0,
+    attackCooldown:0, respawnTimer:0, homeX: t.center.x, homeZ: t.center.z
+  };
+  t.bots.push(bot);
+  return bot;
+}
+spawnBot('red'); spawnBot('red');
+spawnBot('green'); spawnBot('green');
+
+// ================= PLAYER =================
+camera.position.set(0, 2.7, 4);
+const player = {
+  height:1.75, speed:6.5, velocityY:0, onGround:true,
+  health:100, maxHealth:100, alive:true,
+  iron:0, gold:0, diamond:0, wool:0, kills:0,
+  meleeLevel:0, hasBow:false, hasArmor:false, hasLegendArmor:false,
+  weapon:'sword', bowCooldown:0
+};
+const meleeDamage = [35,50,75,120]; // wood/iron/diamond/legendary index via meleeLevel(0-2), legend separate flag
+
+const keys = {};
+document.addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  if (e.code==='Digit1'){ player.weapon='sword'; updateHotbar(); }
+  if (e.code==='Digit2'){ if (player.hasBow){ player.weapon='bow'; updateHotbar(); } }
+  if (e.code==='Digit3'){ player.weapon='block'; updateHotbar(); }
+  if (e.code==='KeyB') toggleShop();
+});
+document.addEventListener('keyup', e=>keys[e.code]=false);
+
+function updateHotbar(){
+  document.getElementById('slot1').classList.toggle('active', player.weapon==='sword');
+  document.getElementById('slot2').classList.toggle('active', player.weapon==='bow');
+  document.getElementById('slot3').classList.toggle('active', player.weapon==='block');
+}
+
+let yaw=0, pitch=0;
+const blocker=document.getElementById('blocker');
+const startBox=document.getElementById('startBox');
+const gameOverBox=document.getElementById('gameOverBox');
+const winBox=document.getElementById('winBox');
+const shopPanel=document.getElementById('shopPanel');
+let shopOpen=false, running=false;
+
+document.body.addEventListener('click', ()=>{ if(player.alive && blocker.style.display==='none' && !shopOpen) document.body.requestPointerLock(); });
+document.addEventListener('mousemove', e=>{
+  if (document.pointerLockElement !== document.body) return;
+  yaw -= e.movementX*0.0022;
+  pitch -= e.movementY*0.0022;
+  pitch = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, pitch));
+});
+function updateCameraRotation(){
+  camera.rotation.set(0,0,0);
+  camera.rotateY(yaw);
+  camera.rotateX(pitch);
+}
+
+function toggleShop(){
+  if (!running) return;
+  shopOpen = !shopOpen;
+  shopPanel.style.display = shopOpen ? 'block' : 'none';
+  if (shopOpen){ document.exitPointerLock(); refreshShopButtons(); }
+  else { document.body.requestPointerLock(); }
+}
+document.getElementById('shopClose').addEventListener('click', toggleShop);
+
+function refreshShopButtons(){
+  document.getElementById('buyWool').disabled = player.iron < 4;
+  document.getElementById('buyIronSword').disabled = player.iron < 8 || player.meleeLevel >= 1;
+  document.getElementById('buyDiamondSword').disabled = player.gold < 6 || player.meleeLevel >= 2 || player.meleeLevel < 1;
+  document.getElementById('buyLegendSword').disabled = player.diamond < 3 || player.meleeLevel >= 3 || player.meleeLevel < 2;
+  document.getElementById('buyBow').disabled = player.gold < 10 || player.hasBow;
+  document.getElementById('buyArmor').disabled = player.gold < 8 || player.hasArmor;
+  document.getElementById('buyLegendArmor').disabled = player.diamond < 3 || player.hasLegendArmor || !player.hasArmor;
+}
+document.getElementById('buyWool').addEventListener('click', ()=>{ if (player.iron>=4){ player.iron-=4; player.wool+=16; updateResourceHud(); refreshShopButtons(); } });
+document.getElementById('buyIronSword').addEventListener('click', ()=>{ if (player.iron>=8 && player.meleeLevel<1){ player.iron-=8; player.meleeLevel=1; updateResourceHud(); refreshShopButtons(); } });
+document.getElementById('buyDiamondSword').addEventListener('click', ()=>{ if (player.gold>=6 && player.meleeLevel===1){ player.gold-=6; player.meleeLevel=2; updateResourceHud(); refreshShopButtons(); } });
+document.getElementById('buyLegendSword').addEventListener('click', ()=>{ if (player.diamond>=3 && player.meleeLevel===2){ player.diamond-=3; player.meleeLevel=3; updateResourceHud(); refreshShopButtons(); } });
+document.getElementById('buyBow').addEventListener('click', ()=>{ if (player.gold>=10 && !player.hasBow){ player.gold-=10; player.hasBow=true; updateResourceHud(); refreshShopButtons(); } });
+document.getElementById('buyArmor').addEventListener('click', ()=>{ if (player.gold>=8 && !player.hasArmor){ player.gold-=8; player.hasArmor=true; player.maxHealth=150; player.health=Math.min(player.maxHealth, player.health+50); updateResourceHud(); updateHealthHud(); refreshShopButtons(); } });
+document.getElementById('buyLegendArmor').addEventListener('click', ()=>{ if (player.diamond>=3 && player.hasArmor && !player.hasLegendArmor){ player.diamond-=3; player.hasLegendArmor=true; player.maxHealth=250; player.health=Math.min(player.maxHealth, player.health+100); updateResourceHud(); updateHealthHud(); refreshShopButtons(); } });
+
+// ================= WEAPON VIEWMODEL =================
+const gunGroup = new THREE.Group();
+const swordMat = new THREE.MeshStandardMaterial({ color:0xcccccc, metalness:0.7, roughness:0.3 });
+const swordMesh = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.7,0.08), swordMat);
+swordMesh.position.set(0.28,-0.25,-0.4);
+swordMesh.rotation.z = 0.5;
+gunGroup.add(swordMesh);
+const bowMesh = new THREE.Mesh(new THREE.TorusGeometry(0.25,0.03,6,10,Math.PI), new THREE.MeshStandardMaterial({ color:0x6b4423 }));
+bowMesh.position.set(0.28,-0.2,-0.5);
+bowMesh.rotation.y = Math.PI/2;
+bowMesh.visible = false;
+gunGroup.add(bowMesh);
+const blockPreviewMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.4,0.4), texMat(TEX.wool.clone()));
+blockPreviewMesh.position.set(0.28,-0.25,-0.45);
+blockPreviewMesh.visible = false;
+gunGroup.add(blockPreviewMesh);
+camera.add(gunGroup);
+scene.add(camera);
+
+let swingT = 0;
+function playSwingAnim(){ swingT = 1; }
+
+// ================= PLACED BLOCKS =================
+const placedBlocks = [];
+function placeBlockAt(pos){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(VOX,VOX,VOX), texMat(TEX.wool.clone()));
+  const snapped = new THREE.Vector3(
+    Math.round(pos.x/VOX)*VOX,
+    Math.max(VOX/2, Math.round(pos.y/VOX)*VOX),
+    Math.round(pos.z/VOX)*VOX
+  );
+  m.position.copy(snapped);
+  m.castShadow = true; m.receiveShadow = true;
+  m.userData.placed = true;
+  scene.add(m);
+  placedBlocks.push(m);
+  return m;
+}
+
+// ================= SHOOTING / INTERACTION =================
+const raycaster = new THREE.Raycaster();
+const arrows = [];
+
+function getAllBotMeshes(){
+  const meshes = [];
+  Object.values(teams).forEach(t=>{ t.bots.forEach(b=>{ if (b.alive && !b.dying) meshes.push(b.head, b.torso); }); });
+  return meshes;
+}
+function getAllBedMeshes(){ return Object.values(teams).filter(t=>t.bedAlive).map(t=>t.bed.children[0]); }
+function findBotByMesh(mesh){
+  for (const t of Object.values(teams)) for (const b of t.bots) if (b.head===mesh || b.torso===mesh) return b;
+  return null;
+}
+function findTeamByBedMesh(mesh){
+  for (const [key,t] of Object.entries(teams)) if (t.bed.children[0]===mesh) return key;
+  return null;
+}
+
+function primaryAction(){
+  if (!player.alive) return;
+  raycaster.setFromCamera({x:0,y:0}, camera);
+
+  if (player.weapon==='bow'){
+    if (player.bowCooldown>0) return;
+    player.bowCooldown = 0.6;
+    const start = new THREE.Vector3(); camera.getWorldPosition(start);
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.1,6,6), new THREE.MeshStandardMaterial({ color:0x442200 }));
+    mesh.position.copy(start).add(dir.clone().multiplyScalar(0.8));
+    scene.add(mesh);
+    arrows.push({ mesh, dir, life:2.5 });
+    playSwingAnim();
+    return;
+  }
+
+  const targets = [...getAllBotMeshes(), ...getAllBedMeshes(), ...placedBlocks];
+  const hits = raycaster.intersectObjects(targets, false);
+  if (hits.length===0 || hits[0].distance>4) { playSwingAnim(); return; }
+  const obj = hits[0].object;
+  playSwingAnim();
+
+  const bot = findBotByMesh(obj);
+  if (bot){ damageBot(bot, currentMeleeDamage()); return; }
+
+  const bedTeam = findTeamByBedMesh(obj);
+  if (bedTeam && bedTeam!=='player'){ damageBed(bedTeam, currentMeleeDamage()*0.5); return; }
+
+  if (obj.userData.placed){
+    scene.remove(obj);
+    const idx = placedBlocks.indexOf(obj);
+    if (idx>-1) placedBlocks.splice(idx,1);
+    player.wool = Math.min(999, player.wool+1);
+    updateResourceHud();
+  }
+}
+function currentMeleeDamage(){ return meleeDamage[player.meleeLevel]; }
+
+function secondaryAction(){
+  if (!player.alive || player.wool<=0) return;
+  raycaster.setFromCamera({x:0,y:0}, camera);
+  const targets = [...placedBlocks, ...scene.children.filter(c=>c.geometry && c.geometry.type==='BoxGeometry' && !c.userData.placed && c!==blockPreviewMesh)];
+  const hits = raycaster.intersectObjects(targets, false);
+  if (hits.length===0 || hits[0].distance>5) return;
+  const hit = hits[0];
+  const placePos = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(VOX/2));
+  placeBlockAt(placePos);
+  player.wool--;
+  updateResourceHud();
+}
+
+document.addEventListener('mousedown', e=>{
+  if (document.pointerLockElement!==document.body) return;
+  if (e.button===0) primaryAction();
+  if (e.button===2) secondaryAction();
+});
+document.addEventListener('contextmenu', e=>e.preventDefault());
+
+function damageBot(bot, dmg){
+  bot.hp -= dmg;
+  if (bot.hp<=0 && bot.alive && !bot.dying){
+    bot.alive=false; bot.dying=true; bot.deathT=0;
+    player.kills++;
+    document.getElementById('killCount').textContent = player.kills;
+    addKillfeed(`Bot ${bot.team} éliminé !`);
+    const t = teams[bot.team];
+    if (t.bedAlive) bot.respawnTimer = 8;
+    checkWinCondition();
+  }
+}
+
+function damageBed(teamKey, dmg){
+  const t = teams[teamKey];
+  if (!t.bedAlive) return;
+  t.bedHP -= dmg;
+  if (t.bedHP<=0){
+    t.bedAlive = false;
+    scene.remove(t.bed);
+    const statusEl = document.getElementById('status'+teamKey.charAt(0).toUpperCase()+teamKey.slice(1));
+    statusEl.classList.remove('bedAlive');
+    statusEl.classList.add('bedDead');
+    addKillfeed(`Lit ${teamKey} détruit !`);
+  }
+}
+
+function addKillfeed(text){
+  const el = document.getElementById('killfeed');
+  const row = document.createElement('div');
+  row.textContent = text;
+  el.prepend(row);
+  requestAnimationFrame(()=> row.style.opacity=1);
+  setTimeout(()=>{ row.style.opacity=0; setTimeout(()=>row.remove(),400); }, 2200);
+  while (el.children.length>5) el.removeChild(el.lastChild);
+}
+
+function checkWinCondition(){
+  const redDone = !teams.red.bedAlive && teams.red.bots.every(b=>!b.alive && !b.dying);
+  const greenDone = !teams.green.bedAlive && teams.green.bots.every(b=>!b.alive && !b.dying);
+  if (redDone && greenDone) winGame();
+}
+
+// ================= HUD =================
+function updateResourceHud(){
+  document.getElementById('ironCount').textContent = player.iron;
+  document.getElementById('goldCount').textContent = player.gold;
+  document.getElementById('diamondCount').textContent = player.diamond;
+  document.getElementById('woolCount').textContent = player.wool;
+}
+function updateHealthHud(){ document.getElementById('healthBar').style.width = Math.max(0,(player.health/player.maxHealth)*100)+'%'; }
+updateResourceHud(); updateHealthHud(); updateHotbar();
+
+// ================= COLLISION HELPERS =================
+function groundHeightAt(x,z){
+  let top = -999;
+  const islandCenters = [teams.player.center, teams.red.center, teams.green.center, MID];
+  for (const c of islandCenters){
+    const half = c===MID ? 5 : 10;
+    if (Math.abs(x-c.x)<half && Math.abs(z-c.z)<half){ top = Math.max(top, 0); }
+  }
+  placedBlocks.forEach(b=>{
+    if (Math.abs(x-b.position.x)<VOX/2+0.4 && Math.abs(z-b.position.z)<VOX/2+0.4){
+      top = Math.max(top, b.position.y + VOX/2);
+    }
+  });
+  return top;
+}
+
+// ================= PLAYER UPDATE =================
+function updatePlayer(dt){
+  updateCameraRotation();
+  const forward = new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)).negate();
+  const right = new THREE.Vector3(Math.sin(yaw+Math.PI/2),0,Math.cos(yaw+Math.PI/2)).negate();
+  let mx=0,mz=0;
+  if (keys['KeyW']) { mx+=forward.x; mz+=forward.z; }
+  if (keys['KeyS']) { mx-=forward.x; mz-=forward.z; }
+  if (keys['KeyA']) { mx-=right.x; mz-=right.z; }
+  if (keys['KeyD']) { mx+=right.x; mz+=right.z; }
+  const len = Math.hypot(mx,mz);
+  if (len>0){ mx/=len; mz/=len; }
+  const dist = player.speed*dt;
+  camera.position.x += mx*dist;
+  camera.position.z += mz*dist;
+
+  const groundY = groundHeightAt(camera.position.x, camera.position.z);
+  const feetTarget = groundY + player.height;
+
+  if (keys['Space'] && player.onGround){ player.velocityY=5.4; player.onGround=false; }
+  player.velocityY -= 15*dt;
+  camera.position.y += player.velocityY*dt;
+
+  if (groundY > -900 && camera.position.y <= feetTarget){
+    camera.position.y = feetTarget;
+    player.velocityY = 0;
+    player.onGround = true;
+  } else {
+    player.onGround = false;
+  }
+
+  if (camera.position.y < -25){
+    if (teams.player.bedAlive){
+      camera.position.set(0, 2.7, 4);
+      player.velocityY = 0;
+      player.health = Math.max(1, player.health-15);
+      updateHealthHud();
+    } else { killPlayer(); }
+  }
+
+  bowMesh.visible = player.weapon==='bow';
+  swordMesh.visible = player.weapon==='sword';
+  blockPreviewMesh.visible = player.weapon==='block';
+  if (swingT>0){
+    swingT -= dt*4;
+    swordMesh.rotation.x = Math.sin(swingT*Math.PI)*-1.2;
+    bowMesh.position.z = -0.5 - Math.sin(swingT*Math.PI)*0.1;
+  } else { swordMesh.rotation.x = 0; }
+
+  if (player.bowCooldown>0) player.bowCooldown -= dt;
+
+  ironTimer -= dt; goldTimer -= dt; diamondTimer -= dt;
+  if (ironTimer<=0){ spawnResource('iron'); ironTimer=3; }
+  if (goldTimer<=0){ spawnResource('gold'); goldTimer=8; }
+  if (diamondTimer<=0){ spawnResource('diamond'); diamondTimer=15; }
+
+  for (let i=groundItems.length-1;i>=0;i--){
+    const gi = groundItems[i];
+    gi.spinT += dt*3;
+    gi.mesh.rotation.y = gi.spinT;
+    gi.mesh.position.y = 0.6 + Math.sin(gi.spinT*1.5)*0.1;
+    const dx = camera.position.x - gi.mesh.position.x, dz = camera.position.z - gi.mesh.position.z;
+    if (Math.hypot(dx,dz) < 1.4){
+      if (gi.type==='iron') player.iron++;
+      else if (gi.type==='gold') player.gold++;
+      else player.diamond++;
+      updateResourceHud();
+      scene.remove(gi.mesh);
+      groundItems.splice(i,1);
+    }
+  }
+
+  clouds.forEach(c=>{
+    c.g.position.x += c.speed*dt;
+    if (c.g.position.x > 130) c.g.position.x = -130;
+  });
+}
+
+function killPlayer(){
+  if (!player.alive) return;
+  if (teams.player.bedAlive){
+    player.health = player.maxHealth;
+    camera.position.set(0,2.7,4);
+    player.velocityY = 0;
+    updateHealthHud();
+  } else {
+    player.alive = false;
+    running = false;
+    document.exitPointerLock();
+    blocker.style.display='flex';
+    startBox.style.display='none';
+    gameOverBox.style.display='block';
+    document.getElementById('finalKills').textContent = player.kills;
+  }
+}
+
+function winGame(){
+  running = false;
+  document.exitPointerLock();
+  blocker.style.display='flex';
+  startBox.style.display='none';
+  winBox.style.display='block';
+  document.getElementById('finalKillsWin').textContent = player.kills;
+}
+
+function damagePlayer(dmg){
+  if (!player.alive) return;
+  player.health -= dmg;
+  updateHealthHud();
+  const hf = document.getElementById('hitFlash');
+  hf.style.opacity=0.5; setTimeout(()=>hf.style.opacity=0,150);
+  if (player.health<=0){ player.health=0; updateHealthHud(); killPlayer(); }
+}
+
+// ================= BOT UPDATE =================
+function updateBots(dt){
+  Object.entries(teams).forEach(([key,t])=>{
+    if (key==='player') return;
+    t.bots.forEach(bot=>{
+      if (bot.dying){
+        bot.deathT += dt;
+        const dt2 = Math.min(1, bot.deathT/0.6);
+        bot.torsoGroup.rotation.x = dt2*(Math.PI/2.2);
+        bot.root.position.y = -dt2*0.6;
+        if (bot.deathT>1.2){ bot.root.visible=false; }
+        return;
+      }
+      if (!bot.alive){
+        if (bot.respawnTimer>0){
+          bot.respawnTimer -= dt;
+          if (bot.respawnTimer<=0 && t.bedAlive){
+            bot.alive=true; bot.dying=false; bot.hp=bot.maxHP;
+            bot.root.visible=true; bot.root.position.set(bot.homeX,0,bot.homeZ);
+            bot.torsoGroup.rotation.x=0;
+          }
+        }
+        return;
+      }
+      const dx = camera.position.x-bot.root.position.x, dz = camera.position.z-bot.root.position.z;
+      const distToPlayer = Math.hypot(dx,dz);
+      const distHomeToPlayer = Math.hypot(camera.position.x-bot.homeX, camera.position.z-bot.homeZ);
+      let moving=false;
+
+      if (player.alive && distToPlayer < 13 && distHomeToPlayer < 16){
+        if (distToPlayer > 2.2){
+          bot.root.position.x += (dx/distToPlayer)*3.2*dt;
+          bot.root.position.z += (dz/distToPlayer)*3.2*dt;
+          moving=true;
+        }
+        bot.root.rotation.y = Math.atan2(dx,dz);
+        bot.attackCooldown -= dt;
+        if (distToPlayer<=2.4 && bot.attackCooldown<=0){
+          bot.attackCooldown = 1.0;
+          damagePlayer(8);
+        }
+      } else {
+        bot.walkPhase += dt*0.3;
+        const wanderX = bot.homeX + Math.sin(bot.walkPhase)*2;
+        const wanderZ = bot.homeZ + Math.cos(bot.walkPhase*0.7)*2;
+        const wdx = wanderX-bot.root.position.x, wdz = wanderZ-bot.root.position.z;
+        const wdist = Math.hypot(wdx,wdz);
+        if (wdist>0.3){
+          bot.root.position.x += (wdx/wdist)*1.0*dt;
+          bot.root.position.z += (wdz/wdist)*1.0*dt;
+          bot.root.rotation.y = Math.atan2(wdx,wdz);
+          moving=true;
+        }
+      }
+
+      if (moving){
+        bot.walkPhase += dt*6;
+        const swing = Math.sin(bot.walkPhase)*0.5;
+        bot.legL.rotation.x = swing;
+        bot.legR.rotation.x = -swing;
+        bot.torsoGroup.position.y = 1.5+Math.abs(Math.sin(bot.walkPhase))*0.04;
+      }
+    });
+  });
+}
+
+// ================= ARROWS =================
+function updateArrows(dt){
+  for (let i=arrows.length-1;i>=0;i--){
+    const a = arrows[i];
+    a.mesh.position.add(a.dir.clone().multiplyScalar(28*dt));
+    a.life -= dt;
+    let hit=false;
+    Object.entries(teams).forEach(([key,t])=>{
+      if (key==='player') return;
+      t.bots.forEach(bot=>{
+        if (!bot.alive || bot.dying || hit) return;
+        const d = a.mesh.position.distanceTo(bot.root.position.clone().add(new THREE.Vector3(0,1.3,0)));
+        if (d<1.0){ damageBot(bot, 28); hit=true; }
+      });
+      if (!hit && t.bedAlive){
+        const d = a.mesh.position.distanceTo(t.bed.position);
+        if (d<1.8){ damageBed(key, 15); hit=true; }
+      }
+    });
+    if (hit || a.life<=0){ scene.remove(a.mesh); arrows.splice(i,1); }
+  }
+}
+
+// ================= MAIN LOOP =================
+let lastTime = performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const dt = Math.min(0.05,(now-lastTime)/1000);
+  lastTime = now;
+  if (!running){ renderer.render(scene,camera); return; }
+  updatePlayer(dt);
+  updateBots(dt);
+  updateArrows(dt);
+  renderer.render(scene,camera);
+}
+animate();
+
+// ================= START / RESTART =================
+function resetGame(){ location.reload(); }
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  blocker.style.display='none'; running=true; document.body.requestPointerLock();
+});
+document.getElementById('restartBtn').addEventListener('click', resetGame);
+document.getElementById('restartBtnWin').addEventListener('click', resetGame);
+document.addEventListener('pointerlockchange', ()=>{
+  if (document.pointerLockElement!==document.body && running && player.alive && !shopOpen){
+    running=false; blocker.style.display='flex';
+  } else if (document.pointerLockElement===document.body){
+    running=true; blocker.style.display='none';
+  }
+});
+</script>
+</body>
+</html>

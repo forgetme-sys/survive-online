@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C00CKIDE — Hacker Mode</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#030606;color:#00ff66;font-family:Consolas,monospace;overflow:hidden}
+body:before{content:"";position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,102,.035) 0 1px,transparent 1px 4px);pointer-events:none}
+#app{height:100vh;display:flex;flex-direction:column;padding:18px;gap:14px}
+header{border:1px solid #00ff66;padding:14px;box-shadow:0 0 20px #00ff6633;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:28px;font-weight:bold;text-shadow:0 0 12px #00ff66}
+.status{font-size:14px}
+main{display:grid;grid-template-columns:1.6fr .8fr;gap:14px;min-height:0;flex:1}
+.panel{border:1px solid #00ff66;padding:14px;background:#04100a;box-shadow:0 0 18px #00ff6618;min-height:0}
+h2{font-size:16px;margin:0 0 10px}
+#terminal{height:calc(100% - 42px);overflow:auto;background:#000;padding:12px;border:1px solid #063d1d;white-space:pre-wrap}
+.line{margin:3px 0}
+.ok{color:#00ff66}.warn{color:#ffe600}.bad{color:#ff4545}.cyan{color:#00eaff}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{background:#001d0b;color:#00ff66;border:1px solid #00ff66;padding:12px;font-family:inherit;font-weight:bold;cursor:pointer}
+button:hover{background:#00ff66;color:#001006;box-shadow:0 0 15px #00ff66}
+button:disabled{opacity:.35;cursor:not-allowed}
+.stat{margin:13px 0}.bar{height:18px;border:1px solid #00ff66;background:#000}.fill{height:100%;width:0;background:#00ff66;box-shadow:0 0 12px #00ff66;transition:width .25s}
+.big{font-size:30px}
+.glitch{animation:glitch .15s infinite alternate}
+@keyframes glitch{from{transform:translateX(-1px)}to{transform:translateX(1px)}
+}
+@media(max-width:800px){main{grid-template-columns:1fr}body{overflow:auto}#app{height:auto;min-height:100vh}.panel{min-height:400px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="logo" id="logo">C00CKIDE // HACKER MODE</div>
+  <div class="status">STATUS: <span id="status" class="bad">OFFLINE</span></div>
+</header>
+
+<main>
+<section class="panel">
+  <h2>[ TERMINAL ]</h2>
+  <div id="terminal"></div>
+</section>
+
+<section class="panel">
+  <h2>[ CONTROL CENTER ]</h2>
+  <div class="stat">HACK LEVEL <div class="big" id="level">1</div></div>
+  <div class="stat">PROGRESS <span id="percent">0%</span>
+    <div class="bar"><div class="fill" id="fill"></div></div>
+  </div>
+  <div class="stat">GAME COINS <div class="big" id="coins">0</div></div>
+  <div class="controls">
+    <button id="activate">ACTIVATE</button>
+    <button id="scan">SCAN</button>
+    <button id="access">ACCESS</button>
+    <button id="override">OVERRIDE</button>
+    <button id="reward">+100 COINS</button>
+    <button id="reset">RESET</button>
+  </div>
+  <p class="warn">⚠ Simulation only — no real accounts, Roblox, passwords or Robux are accessed.</p>
+</section>
+</main>
+</div>
+
+<script>
+const terminal=document.getElementById("terminal");
+const statusEl=document.getElementById("status");
+const fill=document.getElementById("fill");
+const percent=document.getElementById("percent");
+const levelEl=document.getElementById("level");
+const coinsEl=document.getElementById("coins");
+const logo=document.getElementById("logo");
+
+let progress=0, level=1, coins=0, active=false;
+
+function log(text, cls=""){
+  const d=document.createElement("div");
+  d.className="line "+cls;
+  d.textContent="> "+text;
+  terminal.appendChild(d);
+  terminal.scrollTop=terminal.scrollHeight;
+}
+function update(){
+  progress=Math.max(0,Math.min(100,progress));
+  fill.style.width=progress+"%";
+  percent.textContent=progress+"%";
+  level=Math.max(1,Math.floor(progress/20)+1);
+  levelEl.textContent=level;
+  coinsEl.textContent=coins;
+}
+function glitch(){
+  logo.classList.add("glitch");
+  setTimeout(()=>logo.classList.remove("glitch"),700);
+}
+function run(name, amount){
+  if(!active){log("ACCESS DENIED — active le mode d'abord.","bad");glitch();return}
+  log(name+"...", "cyan");
+  let p=progress;
+  const timer=setInterval(()=>{
+    p+=Math.floor(Math.random()*8)+3;
+    progress=Math.min(p,100);
+    update();
+    if(progress>=100){
+      clearInterval(timer);
+      log(name+" COMPLETE — simulation réussie.","ok");
+      coins+=50;
+      update();
+      glitch();
+    }
+  },180);
+}
+document.getElementById("activate").onclick=()=>{
+  active=!active;
+  if(active){
+    statusEl.textContent="ONLINE"; statusEl.className="ok";
+    log("C00CKIDE SYSTEM INITIALIZED.","ok");
+    log("Fictional hacker simulation started.","cyan");
+  }else{
+    statusEl.textContent="OFFLINE"; statusEl.className="bad";
+    log("SYSTEM PAUSED.","warn");
+  }
+};
+document.getElementById("scan").onclick=()=>run("SCANNING GAME WORLD",15);
+document.getElementById("access").onclick=()=>run("SIMULATING ACCESS CHECK",20);
+document.getElementById("override").onclick=()=>run("SIMULATING OVERRIDE",25);
+document.getElementById("reward").onclick=()=>{
+  if(!active){log("ACCESS DENIED.","bad");return}
+  coins+=100; update(); log("+100 GAME COINS — fictional reward.","ok");
+};
+document.getElementById("reset").onclick=()=>{
+  progress=0;coins=0;active=false;
+  statusEl.textContent="OFFLINE";statusEl.className="bad";
+  update();terminal.innerHTML="";
+  log("SYSTEM RESET.","warn");
+};
+log("C00CKIDE v1.0 READY.","ok");
+log("Type of system: FICTIONAL GAME SIMULATION","cyan");
+log("No real hacking functions loaded.","warn");
+update();
+</script>
+</body>
+</html>

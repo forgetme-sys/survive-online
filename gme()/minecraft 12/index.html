@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#8dc7e5">
+  <title>Monde Libre — aventures 2D</title>
+  <style>
+    :root {
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      color: #fff;
+      --panel: rgb(12 20 25 / 78%);
+      --line: rgb(255 255 255 / 24%);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #8dc7e5; }
+    body { user-select: none; -webkit-user-select: none; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+    #shade { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgb(8 15 22 / 24%)); }
+    #header { position: fixed; top: 16px; left: 18px; z-index: 2; display: grid; gap: 4px; text-shadow: 0 2px 4px #263642; pointer-events: none; }
+    #brand { font-size: 14px; font-weight: 850; letter-spacing: .19em; }
+    #time { font-size: 12px; }
+    #help { position: fixed; z-index: 2; top: 15px; right: 16px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 11px; line-height: 1.65; backdrop-filter: blur(8px); pointer-events: none; }
+    #help b { color: #fff; }
+    #hotbar { position: fixed; z-index: 3; bottom: 24px; left: 50%; display: flex; gap: 5px; padding: 7px; transform: translateX(-50%); border: 1px solid var(--line); border-radius: 12px; background: rgb(11 16 20 / 82%); box-shadow: 0 8px 28px #0004; backdrop-filter: blur(8px); }
+    .slot { position: relative; display: grid; width: 56px; height: 55px; place-items: center; padding: 0; border: 2px solid transparent; border-radius: 7px; color: #fff; background: #ffffff0c; cursor: pointer; }
+    .slot.selected { border-color: #fff; background: #ffffff22; transform: translateY(-3px); }
+    .slot:hover { background: #ffffff25; }
+    .slot .key { position: absolute; top: 2px; left: 5px; font-size: 10px; opacity: .72; }
+    .slot .swatch { width: 26px; height: 26px; border: 1px solid #ffffff66; border-radius: 3px; box-shadow: inset -5px -5px #0002, inset 4px 4px #fff2; }
+    .slot .name { position: absolute; bottom: -17px; font-size: 9px; white-space: nowrap; text-shadow: 0 1px 3px #000; }
+    .slot .count { position: absolute; right: 4px; bottom: 2px; font-size: 10px; font-weight: 750; text-shadow: 0 1px 3px #000; }
+    #bag-toggle { position: fixed; z-index: 3; top: 124px; right: 16px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 9px; color: #fff; background: var(--panel); font: inherit; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); }
+    #bag-toggle:hover { background: rgb(35 48 54 / 90%); }
+    #craft-toggle { position: fixed; z-index: 3; top: 170px; right: 16px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 9px; color: #fff; background: var(--panel); font: inherit; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); }
+    #craft-toggle:hover { background: rgb(35 48 54 / 90%); }
+    #status { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: #ffffffce; font-size: 10px; }
+    #status-dot { width: 7px; height: 7px; border-radius: 50%; background: #e3b34f; box-shadow: 0 0 8px currentColor; }
+    #status.online #status-dot { background: #82d894; }
+    #status.offline #status-dot { background: #e17a70; }
+    #chat-toggle { position: fixed; z-index: 3; bottom: 27px; right: 16px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; color: #fff; background: var(--panel); font: inherit; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); }
+    #menu-toggle { position: fixed; z-index: 3; bottom: 27px; left: 16px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; color: #fff; background: var(--panel); font: inherit; font-size: 12px; cursor: pointer; backdrop-filter: blur(8px); }
+    #chat-panel { position: fixed; z-index: 7; right: 16px; bottom: 75px; display: grid; grid-template-rows: auto minmax(90px, 190px) auto; gap: 9px; width: min(310px, calc(100vw - 24px)); max-height: 320px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: rgb(12 20 25 / 92%); box-shadow: 0 12px 35px #0005; backdrop-filter: blur(9px); }
+    #chat-panel.hidden { display: none; }
+    .chat-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 750; }
+    #chat-log { overflow: auto; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 7px; background: #0002; font-size: 11px; overflow-wrap: anywhere; }
+    .chat-message { color: #ffffffdf; }
+    .chat-message .sender { color: #c5e29c; font-weight: 750; }
+    .chat-message.system { color: #ffffff9b; font-style: italic; }
+    #chat-form { display: flex; gap: 6px; }
+    #chat-input { min-width: 0; flex: 1; padding: 8px 9px; border: 1px solid #ffffff29; border-radius: 7px; outline: none; color: #fff; background: #ffffff10; font: inherit; font-size: 12px; }
+    #chat-input:focus { border-color: #c5e29c; }
+    #chat-form button { padding: 0 10px; border: 0; border-radius: 7px; color: #1b2818; background: #c4e292; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+    #health-wrap { position: fixed; z-index: 2; top: 56px; left: 18px; width: 150px; height: 9px; overflow: hidden; border: 1px solid #ffffff80; border-radius: 9px; background: #190e19a8; pointer-events: none; }
+    #health-fill { width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #b83348, #ed6e6a); transition: width .2s ease; }
+    #health-text { position: absolute; inset: -3px 0 0; color: white; font-size: 8px; text-align: center; text-shadow: 0 1px 3px #000; }
+    #bag-overlay { position: fixed; z-index: 8; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(5 10 14 / 62%); opacity: 1; transition: opacity .16s ease; }
+    #bag-overlay.hidden { opacity: 0; pointer-events: none; }
+    #bag-panel { width: min(510px, 100%); padding: 22px; border: 1px solid #ffffff35; border-radius: 15px; background: rgb(17 25 29 / 96%); box-shadow: 0 24px 70px #0008; }
+    .bag-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+    .bag-title { margin: 0; font-size: 21px; }
+    #bag-close { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 8px; color: #fff; background: #ffffff0c; font: inherit; font-size: 19px; cursor: pointer; }
+    #bag-summary { margin: 0 0 17px; color: #ffffffa8; font-size: 12px; }
+    #bag-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .bag-slot { position: relative; display: grid; min-width: 0; min-height: 72px; place-items: center; border: 1px solid #ffffff20; border-radius: 8px; background: #ffffff09; color: #fff; cursor: pointer; }
+    .bag-slot:hover, .bag-slot:focus-visible { border-color: #ffffffb0; background: #ffffff1a; outline: none; }
+    .bag-slot .swatch { width: 28px; height: 28px; border: 1px solid #ffffff55; border-radius: 4px; box-shadow: inset -5px -5px #0002, inset 4px 4px #fff2; }
+    .bag-slot .bag-name { position: absolute; left: 4px; right: 4px; bottom: 4px; overflow: hidden; font-size: 10px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+    .bag-slot .bag-count { position: absolute; top: 3px; right: 5px; font-size: 10px; font-weight: 750; text-shadow: 0 1px 3px #000; }
+    .bag-empty { min-height: 72px; border: 1px dashed #ffffff1b; border-radius: 8px; background: #ffffff05; }
+    #craft-overlay { position: fixed; z-index: 9; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(5 10 14 / 62%); opacity: 1; transition: opacity .16s ease; }
+    #craft-overlay.hidden { opacity: 0; pointer-events: none; }
+    #craft-panel { width: min(530px, 100%); padding: 22px; border: 1px solid #ffffff35; border-radius: 15px; background: rgb(17 25 29 / 97%); box-shadow: 0 24px 70px #0008; }
+    .craft-recipes { display: grid; gap: 9px; }
+    .recipe { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; padding: 12px; border: 1px solid #ffffff1d; border-radius: 9px; background: #ffffff08; }
+    .recipe h3 { margin: 0 0 4px; font-size: 14px; }
+    .recipe p { margin: 0; color: #ffffff9c; font-size: 11px; line-height: 1.5; }
+    .recipe button { min-width: 88px; padding: 9px 11px; border: 1px solid #ffffff32; border-radius: 7px; color: #fff; background: #ffffff13; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .recipe button:hover:not(:disabled) { background: #ffffff24; }
+    .recipe button:disabled { opacity: .38; cursor: not-allowed; }
+    #toast { position: fixed; z-index: 4; bottom: 99px; left: 50%; padding: 8px 13px; border-radius: 8px; background: var(--panel); font-size: 12px; opacity: 0; transform: translate(-50%, 7px); transition: .18s; pointer-events: none; }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    #overlay { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 20px; background: linear-gradient(#132a374d, #081319aa); transition: opacity .2s; }
+    #overlay.hidden { opacity: 0; pointer-events: none; }
+    .card { width: min(960px, 100%); max-height: calc(100vh - 36px); overflow: auto; padding: clamp(22px, 4vw, 38px); border: 1px solid #ffffff40; border-radius: 22px; background: #10191fee; box-shadow: 0 24px 80px #0006; text-align: center; backdrop-filter: blur(12px); }
+    .eyebrow { margin: 0 0 8px; color: #c4e29a; font-size: 11px; font-weight: 800; letter-spacing: .2em; }
+    h1 { margin: 0; font-size: clamp(38px, 8vw, 60px); letter-spacing: -.06em; }
+    .intro { max-width: 590px; margin: 12px auto 22px; color: #ffffffbd; font-size: 14px; line-height: 1.65; }
+    .mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; text-align: left; }
+    .mode-card { position: relative; display: flex; min-height: 216px; flex-direction: column; align-items: flex-start; overflow: hidden; padding: 20px; border: 1px solid #ffffff25; border-radius: 16px; background: linear-gradient(145deg, #315761, #17252c 70%); }
+    .mode-card::after { position: absolute; top: -28px; right: -8px; content: attr(data-icon); font-size: 108px; opacity: .2; transform: rotate(12deg); pointer-events: none; }
+    .mode-card.mystery { background: linear-gradient(145deg, #59416e, #211b31 72%); }
+    .mode-tag { position: relative; z-index: 1; padding: 5px 9px; border: 1px solid #ffffff35; border-radius: 999px; color: #ffffffe0; font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .mode-card h2 { position: relative; z-index: 1; margin: 14px 0 6px; font-size: clamp(20px, 3vw, 27px); }
+    .mode-card p { position: relative; z-index: 1; max-width: 380px; margin: 0 0 18px; color: #ffffffb7; font-size: 12px; line-height: 1.6; }
+    .mode-start { position: relative; z-index: 1; margin-top: auto; padding: 10px 15px; border: 0; border-radius: 8px; color: #14201a; background: #c4e292; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .mode-start:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .mystery .mode-start { color: #211a2c; background: #d6b5fa; }
+    .player-row { display: flex; max-width: 390px; align-items: center; gap: 10px; margin: 20px auto 0; }
+    .player-row label { color: #ffffffbb; font-size: 12px; white-space: nowrap; }
+    #player-name { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid #ffffff35; border-radius: 8px; color: #fff; background: #ffffff12; font: inherit; }
+    .foot { margin: 14px 0 0; color: #ffffff91; font-size: 10px; }
+    #mode-hud { position: fixed; z-index: 2; top: 78px; left: 18px; max-width: min(330px, calc(100vw - 36px)); padding: 9px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: 11px; line-height: 1.5; backdrop-filter: blur(8px); pointer-events: none; }
+    #mode-hud.hidden { display: none; }
+    body[data-mode="mystery"] #hotbar, body[data-mode="mystery"] #bag-toggle, body[data-mode="mystery"] #craft-toggle { display: none; }
+    body[data-mode="mystery"] #help { top: 15px; }
+    @media (max-width: 620px) {
+      #header { top: 10px; left: 11px; }
+      #help { top: auto; right: 9px; bottom: 102px; font-size: 9px; }
+      #bag-toggle { top: 91px; right: 9px; padding: 7px 10px; font-size: 11px; }
+      #craft-toggle { top: 133px; right: 9px; padding: 7px 10px; font-size: 11px; }
+      #chat-toggle { right: 9px; bottom: 82px; padding: 8px 10px; font-size: 11px; }
+      #menu-toggle { left: 9px; bottom: 82px; padding: 8px 10px; font-size: 11px; }
+      #chat-panel { right: 9px; bottom: 127px; }
+      #health-wrap { top: 46px; left: 11px; width: 112px; height: 7px; }
+      #mode-hud { top: 62px; left: 11px; max-width: calc(100vw - 22px); font-size: 10px; }
+      body[data-mode="mystery"] #help { top: auto; bottom: 78px; }
+      #hotbar { bottom: 20px; gap: 2px; padding: 5px; }
+      .slot { width: 42px; height: 49px; }
+      .slot .swatch { width: 21px; height: 21px; }
+      #bag-panel { padding: 16px; }
+      #bag-grid { gap: 5px; }
+      .bag-slot, .bag-empty { min-height: 62px; }
+      .mode-grid { grid-template-columns: 1fr; gap: 10px; }
+      .mode-card { min-height: 190px; padding: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Jeu de plateforme 2D"></canvas>
+  <div id="shade"></div>
+  <div id="header">
+    <div id="brand">MONDE LIBRE <span style="font-weight:400;opacity:.72">/ 2D</span></div>
+    <div id="time">Jour 1 · 08:00</div>
+    <div id="status"><span id="status-dot"></span><span id="status-text">Connexion au serveur…</span></div>
+  </div>
+  <div id="health-wrap" aria-label="Santé"><div id="health-fill"></div><span id="health-text">100</span></div>
+  <div id="help"><b>Q / D ou ← / →</b> · marcher<br><b>Espace / Z / ↑</b> · sauter<br><b>Clic gauche</b> · miner / attaquer<br><b>Clic droit</b> · poser un bloc<br><b>1–7</b> · matériaux · <b>E</b> · sac · <b>C</b> · craft · <b>T</b> · chat</div>
+  <div id="mode-hud" class="hidden" aria-live="polite"></div>
+  <div id="hotbar" aria-label="Inventaire"></div>
+  <button id="bag-toggle" type="button" aria-haspopup="dialog" aria-expanded="false">🎒 Sac <kbd>E</kbd></button>
+  <button id="craft-toggle" type="button" aria-haspopup="dialog" aria-expanded="false">🔨 Craft <kbd>C</kbd></button>
+  <button id="chat-toggle" type="button" aria-expanded="false">💬 Chat <kbd>T</kbd></button>
+  <button id="menu-toggle" type="button">⌂ Menu</button>
+  <section id="chat-panel" class="hidden" aria-label="Chat multijoueur">
+    <div class="chat-head"><span>💬 Chat du monde</span><span id="online-count">0 en ligne</span></div>
+    <div id="chat-log" role="log" aria-live="polite"></div>
+    <form id="chat-form"><input id="chat-input" maxlength="240" autocomplete="off" placeholder="Écris un message…" aria-label="Message"><button type="submit">Envoyer</button></form>
+  </section>
+  <div id="toast" role="status"></div>
+  <div id="bag-overlay" class="hidden" aria-hidden="true">
+    <section id="bag-panel" role="dialog" aria-modal="true" aria-labelledby="bag-title">
+      <div class="bag-head">
+        <h2 class="bag-title" id="bag-title">🎒 Sac à dos</h2>
+        <button id="bag-close" type="button" aria-label="Fermer le sac">×</button>
+      </div>
+      <p id="bag-summary"></p>
+      <div id="bag-grid" aria-label="Contenu du sac"></div>
+      <p id="bag-hint" style="margin:15px 0 0;color:#ffffff91;font-size:11px;text-align:center">Clique sur un bloc pour le sélectionner · E ou Échap pour fermer</p>
+    </section>
+  </div>
+  <div id="craft-overlay" class="hidden" aria-hidden="true">
+    <section id="craft-panel" role="dialog" aria-modal="true" aria-labelledby="craft-title">
+      <div class="bag-head"><h2 class="bag-title" id="craft-title">🔨 Atelier</h2><button id="craft-close" type="button" aria-label="Fermer l'atelier">×</button></div>
+      <p id="craft-summary" style="margin:0 0 15px;color:#ffffffa8;font-size:12px">Transforme tes matériaux en objets utiles.</p>
+      <div id="craft-recipes" class="craft-recipes"></div>
+      <p style="margin:15px 0 0;color:#ffffff91;font-size:11px;text-align:center">C ou Échap pour fermer</p>
+    </section>
+  </div>
+  <div id="overlay">
+    <div class="card">
+      <p class="eyebrow">CHOISIS TON AVENTURE</p>
+      <h1>MONDE LIBRE</h1>
+      <p class="intro">Deux aventures originales à explorer. Pars à la chasse aux pouvoirs sur les îles ou résous une enquête dans le manoir. Rejoins le serveur pour explorer et discuter avec d'autres joueurs.</p>
+      <div class="mode-grid">
+        <article class="mode-card" data-icon="🍊">
+          <span class="mode-tag">Aventure · Combat</span>
+          <h2>Fruit Seas</h2>
+          <p>Explore des îles, combats des pirates, complète ta prime et déclenche une puissante attaque de fruit.</p>
+          <button class="mode-start" type="button" data-mode="fruit">Jouer à Fruit Seas →</button>
+        </article>
+        <article class="mode-card mystery" data-icon="🔎">
+          <span class="mode-tag">Mystère · Enquête</span>
+          <h2>Mystery Manor</h2>
+          <p>Un assassin rôde parmi les suspects. Trouve trois indices, identifie-le et rejoins la sortie avant le temps écoulé.</p>
+          <button class="mode-start" type="button" data-mode="mystery">Enquêter →</button>
+        </article>
+        <article class="mode-card" data-icon="🪓">
+          <span class="mode-tag">Construction · Survie</span>
+          <h2>Terra 2D</h2>
+          <p>Explore le monde, récolte des matériaux, fabrique des objets et construis un refuge face aux zombies.</p>
+          <button class="mode-start" type="button" data-mode="terra">Explorer Terra →</button>
+        </article>
+      </div>
+      <div class="player-row"><label for="player-name">Nom du joueur</label><input id="player-name" maxlength="18" autocomplete="nickname" value="Explorateur"></div>
+      <p class="foot">Modes de jeu originaux inspirés de jeux d’aventure et de déduction sociale. Non affiliés à Roblox, Blox Fruits ou Murder Mystery 2.</p>
+    </div>
+  </div>
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const overlay = document.querySelector("#overlay");
+      const bagOverlay = document.querySelector("#bag-overlay");
+      const bagToggle = document.querySelector("#bag-toggle");
+      const bagGrid = document.querySelector("#bag-grid");
+      const bagSummary = document.querySelector("#bag-summary");
+      const craftOverlay = document.querySelector("#craft-overlay");
+      const craftToggle = document.querySelector("#craft-toggle");
+      const recipeList = document.querySelector("#craft-recipes");
+      const timeLabel = document.querySelector("#time");
+      const hotbar = document.querySelector("#hotbar");
+      const toast = document.querySelector("#toast");
+      const nameInput = document.querySelector("#player-name");
+      const statusElement = document.querySelector("#status");
+      const statusText = document.querySelector("#status-text");
+      const onlineCount = document.querySelector("#online-count");
+      const chatToggle = document.querySelector("#chat-toggle");
+      const chatPanel = document.querySelector("#chat-panel");
+      const chatLog = document.querySelector("#chat-log");
+      const chatForm = document.querySelector("#chat-form");
+      const chatInput = document.querySelector("#chat-input");
+      const healthFill = document.querySelector("#health-fill");
+      const healthText = document.querySelector("#health-text");
+      const modeHud = document.querySelector("#mode-hud");
+      const brand = document.querySelector("#brand");
+      const help = document.querySelector("#help");
+      const TILE = 32;
+      const WORLD_SEED = 20261010;
+      const types = ["grass", "dirt", "stone", "wood", "sand", "planks", "torch"];
+      const inventory = { grass: 20, dirt: 20, stone: 12, wood: 10, sand: 10, planks: 0, torch: 0 };
+      const recipes = [
+        { id: "planks", name: "Planches", output: "planks", amount: 4, costs: { wood: 1 } },
+        { id: "torch", name: "Torches", output: "torch", amount: 2, costs: { wood: 1, stone: 1 } },
+        { id: "wall", name: "Mur en pierre", output: "stone", amount: 3, costs: { stone: 2, planks: 1 } }
+      ];
+      const info = {
+        grass: { name: "Herbe", swatch: "#648e42", top: "#73a84b", side: "#79563a" },
+        dirt: { name: "Terre", swatch: "#8a5c3c", top: "#a7774e", side: "#80563a" },
+        stone: { name: "Pierre", swatch: "#858782", top: "#a4a69d", side: "#72756f" },
+        wood: { name: "Bois", swatch: "#a87845", top: "#c28b51", side: "#835732" },
+        sand: { name: "Sable", swatch: "#d4c184", top: "#e1d096", side: "#bbaa70" },
+        planks: { name: "Planches", swatch: "#bd915a", top: "#d6ad70", side: "#a77946" },
+        torch: { name: "Torche", swatch: "#f0b448", top: "#ffe07a", side: "#d68031" },
+        leaves: { name: "Feuilles", top: "#608f4b", side: "#4b733d" }
+      };
+
+      let width = innerWidth;
+      let height = innerHeight;
+      let dpr = 1;
+      let running = false;
+      let bagOpen = false;
+      let craftOpen = false;
+      let chatOpen = false;
+      let selected = 0;
+      let cameraX = 0;
+      let cameraY = 0;
+      let elapsed = 0;
+      let lastFrame = performance.now();
+      let toastTimeout = 0;
+      let mouse = { x: -100, y: -100, inside: false };
+      let targetBlock = null;
+      const keys = new Set();
+      const edits = new Map();
+      const zombies = [];
+      const remotePlayers = new Map();
+      let socket = null;
+      let clientId = null;
+      let playerName = "Explorateur";
+      let networkTimer = 0;
+      let nextZombieSpawn = 8;
+      let zombieId = 0;
+      let health = 100;
+      let damageCooldown = 0;
+      let attackCooldown = 0;
+      let mode = "terra";
+      let fruitBounties = 0;
+      let fruitCooldown = 0;
+      let fruitPulse = 0;
+      const mysteryNPCs = [];
+      let mysteryClues = [];
+      let mysteryTime = 150;
+      let mysteryKiller = "";
+      let mysteryRevealed = false;
+      let mysteryFinished = false;
+      let mysteryExitX = 0;
+      let mysteryStunCooldown = 0;
+      let mysteryStun = 0;
+      let reconnectTimer = 0;
+      const clouds = Array.from({ length: 18 }, (_, i) => ({
+        x: i * 13 - 30 + random(i * 19) * 9,
+        y: 2 + random(i * 53) * 8,
+        width: 3 + random(i * 71) * 4
+      }));
+      const stars = Array.from({ length: 100 }, (_, i) => ({
+        x: random(i * 17) * 1000,
+        y: random(i * 97) * 52,
+        radius: .5 + random(i * 31) * 1.3,
+        alpha: .35 + random(i * 43) * .65
+      }));
+      const player = {
+        x: 0,
+        y: 0,
+        w: .68,
+        h: 1.8,
+        vx: 0,
+        vy: 0,
+        grounded: false,
+        facing: 1,
+        walk: 0
+      };
+
+      function random(n) {
+        const a = Math.sin(n * 127.1 + WORLD_SEED * 311.7) * 43758.5453123;
+        return a - Math.floor(a);
+      }
+
+      function hashInt(n) {
+        let x = (n | 0) + WORLD_SEED;
+        x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+        x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+        x ^= x >>> 16;
+        return (x >>> 0) / 4294967296;
+      }
+
+      function smooth(t) { return t * t * (3 - 2 * t); }
+      function valueNoise(x) {
+        const left = Math.floor(x);
+        const t = smooth(x - left);
+        return (hashInt(left) * 2 - 1) * (1 - t) + (hashInt(left + 1) * 2 - 1) * t;
+      }
+
+      const heightCache = new Map();
+      function surfaceAt(x) {
+        x = Math.floor(x);
+        if (heightCache.has(x)) return heightCache.get(x);
+        const broad = valueNoise(x * .035) * 4.2;
+        const hills = valueNoise(x * .105 + 28) * 1.7;
+        const detail = valueNoise(x * .3 - 9) * .55;
+        const result = Math.floor(28 + broad + hills + detail);
+        heightCache.set(x, result);
+        return result;
+      }
+
+      const overrides = new Map();
+      function keyOf(x, y) { return `${x},${y}`; }
+
+      function treeOrigin(x) {
+        if (hashInt(x * 23 + 81) < .91) return false;
+        for (let other = x - 2; other <= x + 2; other++) {
+          if (other === x) continue;
+          if (hashInt(other * 23 + 81) > .91 && (other < x || hashInt(x * 23 + 81) >= hashInt(other * 23 + 81))) return false;
+        }
+        return true;
+      }
+
+      function naturalBlock(x, y) {
+        if (y < 0) return null;
+        const surface = surfaceAt(x);
+        if (y < surface) {
+          if (treeOrigin(x) && y <= surface - 1 && y >= surface - 4) return "wood";
+          if (y <= surface - 4 && y >= surface - 6) {
+          for (let tx = x - 2; tx <= x + 2; tx++) {
+            if (!treeOrigin(tx)) continue;
+            const base = surfaceAt(tx);
+              const dy = y - (base - 5);
+              if (Math.abs(x - tx) <= 2 && dy >= -1 && dy <= 1 && !(Math.abs(x - tx) === 2 && Math.abs(dy) === 1)) return "leaves";
+            }
+          }
+          return null;
+        }
+        if (y === surface) return "grass";
+        if (y <= surface + 3) return "dirt";
+        const cave = valueNoise(x * .16 + y * .11) * .62 + valueNoise(x * .35 - y * .22) * .28;
+        if (y < surface + 8 && cave > .54) return null;
+        return "stone";
+      }
+
+      function blockAt(x, y) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+        const key = keyOf(x, y);
+        return edits.has(key) ? edits.get(key) : naturalBlock(x, y);
+      }
+
+      function resize() {
+        width = innerWidth;
+        height = innerHeight;
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      addEventListener("resize", resize);
+      resize();
+
+      const slots = [];
+      const bagSlots = [];
+      function selectBlock(index) {
+        selected = (index + types.length) % types.length;
+        slots.forEach((slot, i) => slot.classList.toggle("selected", i === selected));
+      }
+      types.forEach((type, index) => {
+        const slot = document.createElement("button");
+        slot.type = "button";
+        slot.className = "slot";
+        slot.setAttribute("aria-label", `${index + 1} : ${info[type].name}`);
+        slot.innerHTML = `<span class="key">${index + 1}</span><span class="swatch" style="background:${info[type].swatch}"></span><span class="count" data-count="${type}"></span><span class="name">${info[type].name}</span>`;
+        slot.addEventListener("click", () => selectBlock(index));
+        hotbar.append(slot);
+        slots.push(slot);
+      });
+      selectBlock(0);
+
+      function updateInventory() {
+        let total = 0;
+        for (let index = 0; index < types.length; index++) {
+          const type = types[index];
+          const count = inventory[type];
+          total += count;
+          document.querySelectorAll(`[data-count="${type}"]`).forEach(element => {
+            element.textContent = count > 99 ? "99+" : String(count);
+          });
+          const bagSlot = bagSlots[index];
+          if (bagSlot) {
+            bagSlot.querySelector(".bag-count").textContent = count > 99 ? "99+" : String(count);
+            bagSlot.setAttribute("aria-label", `${info[type].name}, ${count}, cliquer pour sélectionner`);
+            bagSlot.disabled = count === 0;
+          }
+        }
+        bagSummary.textContent = `${total} blocs · ${types.length} matériaux`;
+        refreshRecipes();
+      }
+
+      function closeBag() {
+        bagOpen = false;
+        bagOverlay.classList.add("hidden");
+        bagOverlay.setAttribute("aria-hidden", "true");
+        bagToggle.setAttribute("aria-expanded", "false");
+      }
+
+      function closeCraft() {
+        craftOpen = false;
+        craftOverlay.classList.add("hidden");
+        craftOverlay.setAttribute("aria-hidden", "true");
+        craftToggle.setAttribute("aria-expanded", "false");
+      }
+
+      function toggleCraft() {
+        if (!running) return;
+        if (bagOpen) closeBag();
+        if (!craftOpen && chatOpen) toggleChat();
+        craftOpen = !craftOpen;
+        craftOverlay.classList.toggle("hidden", !craftOpen);
+        craftOverlay.setAttribute("aria-hidden", String(!craftOpen));
+        craftToggle.setAttribute("aria-expanded", String(craftOpen));
+        if (craftOpen) refreshRecipes();
+      }
+
+      function refreshRecipes() {
+        for (const recipe of recipes) {
+          const button = recipeList.querySelector(`[data-recipe="${recipe.id}"]`);
+          if (!button) continue;
+          const canCraft = Object.entries(recipe.costs).every(([material, amount]) => inventory[material] >= amount);
+          button.disabled = !canCraft;
+          button.textContent = canCraft ? `Fabriquer ×${recipe.amount}` : "Matériaux manquants";
+        }
+      }
+
+      function craft(recipeId) {
+        const recipe = recipes.find(item => item.id === recipeId);
+        if (!recipe || !Object.entries(recipe.costs).every(([material, amount]) => inventory[material] >= amount)) return;
+        for (const [material, amount] of Object.entries(recipe.costs)) inventory[material] -= amount;
+        inventory[recipe.output] += recipe.amount;
+        updateInventory();
+        refreshRecipes();
+        showToast(`${recipe.amount} ${info[recipe.output].name.toLowerCase()} fabriqué(s)`);
+      }
+
+      function toggleBag() {
+        if (!running) return;
+        if (craftOpen) closeCraft();
+        if (!bagOpen && chatOpen) toggleChat();
+        bagOpen = !bagOpen;
+        bagOverlay.classList.toggle("hidden", !bagOpen);
+        bagOverlay.setAttribute("aria-hidden", String(!bagOpen));
+        bagToggle.setAttribute("aria-expanded", String(bagOpen));
+        if (bagOpen) updateInventory();
+      }
+
+      function setOnlineStatus(state, text) {
+        statusElement.className = state;
+        statusText.textContent = text;
+      }
+
+      function updateOnlineCount() {
+        const count = remotePlayers.size + (clientId ? 1 : 0);
+        onlineCount.textContent = `${count} en ligne`;
+        if (socket?.readyState === WebSocket.OPEN) setOnlineStatus("online", `En ligne · ${count} joueur${count > 1 ? "s" : ""}`);
+      }
+
+      function addChatMessage(name, text, system = false) {
+        const row = document.createElement("div");
+        row.className = system ? "chat-message system" : "chat-message";
+        if (system) {
+          row.textContent = text;
+        } else {
+          const sender = document.createElement("span");
+          sender.className = "sender";
+          sender.textContent = `${name}: `;
+          row.append(sender, document.createTextNode(text));
+        }
+        chatLog.append(row);
+        while (chatLog.children.length > 80) chatLog.firstElementChild.remove();
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      function sendNetwork(message) {
+        if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
+      }
+
+      function connectOnline() {
+        if (socket && [WebSocket.CONNECTING, WebSocket.OPEN].includes(socket.readyState)) return;
+        const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+        const host = location.protocol === "file:" ? "localhost:3000" : location.host;
+        const connection = new WebSocket(`${protocol}//${host}/multiplayer`);
+        socket = connection;
+        setOnlineStatus("", "Connexion…");
+
+        connection.addEventListener("open", () => {
+          if (socket !== connection) return;
+          const cleanName = nameInput.value.replace(/[<>]/g, "").trim().slice(0, 18);
+          playerName = cleanName || "Explorateur";
+          connection.send(JSON.stringify({
+            type: "join",
+            name: playerName,
+            x: player.x,
+            y: player.y,
+            facing: player.facing
+          }));
+        });
+
+        connection.addEventListener("message", event => {
+          if (socket !== connection) return;
+          let message;
+          try {
+            message = JSON.parse(event.data);
+          } catch {
+            addChatMessage("", "Message du serveur illisible.", true);
+            return;
+          }
+          if (message.type === "welcome") {
+            clientId = message.id;
+            remotePlayers.clear();
+            for (const other of message.players || []) {
+              if (other.id !== clientId) remotePlayers.set(other.id, other);
+            }
+            for (const [key, type] of message.blocks || []) edits.set(key, type);
+            addChatMessage("", "Connecté au monde multijoueur.", true);
+            updateOnlineCount();
+          } else if (message.type === "player-joined") {
+            if (message.player?.id) remotePlayers.set(message.player.id, message.player);
+            addChatMessage("", `${message.player?.name || "Un joueur"} a rejoint le monde.`, true);
+            updateOnlineCount();
+          } else if (message.type === "player-left") {
+            const leaving = remotePlayers.get(message.id);
+            remotePlayers.delete(message.id);
+            if (leaving) addChatMessage("", `${leaving.name} a quitté le monde.`, true);
+            updateOnlineCount();
+          } else if (message.type === "move" && message.player?.id) {
+            remotePlayers.set(message.player.id, message.player);
+          } else if (message.type === "chat") {
+            addChatMessage(message.name || "Joueur", message.text || "");
+          } else if (message.type === "system") {
+            addChatMessage("", message.text || "", true);
+          } else if (message.type === "block" && Number.isInteger(message.x) && Number.isInteger(message.y)) {
+            edits.set(keyOf(message.x, message.y), message.block);
+          } else if (message.type === "error") {
+            addChatMessage("", message.message || "Erreur du serveur.", true);
+          }
+        });
+
+        connection.addEventListener("close", () => {
+          if (socket !== connection) return;
+          clientId = null;
+          remotePlayers.clear();
+          updateOnlineCount();
+          setOnlineStatus("offline", "Hors ligne · nouvelle tentative…");
+          if (running) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectOnline, 3000);
+          }
+        });
+
+        connection.addEventListener("error", () => {
+          if (socket === connection) setOnlineStatus("offline", "Serveur indisponible · npm start");
+        });
+      }
+
+      function toggleChat(focus = false) {
+        if (!chatOpen && bagOpen) closeBag();
+        if (!chatOpen && craftOpen) closeCraft();
+        chatOpen = !chatOpen;
+        chatPanel.classList.toggle("hidden", !chatOpen);
+        chatToggle.setAttribute("aria-expanded", String(chatOpen));
+        if (focus && chatOpen) chatInput.focus();
+      }
+
+      function drawActor(x, y, facing, name, remote = false, walk = 0, grounded = true) {
+        const sx = (x - cameraX) * TILE;
+        const sy = (y - cameraY) * TILE;
+        const pw = player.w * TILE;
+        const ph = player.h * TILE;
+        const step = grounded ? Math.sin(walk * 8) * 3 : 0;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.scale(facing, 1);
+        ctx.fillStyle = remote ? "#303c52" : "#263640";
+        ctx.fillRect(-pw / 2 + 3, ph - 12 + step, 8, 12);
+        ctx.fillRect(1, ph - 12 - step, 8, 12);
+        ctx.fillStyle = remote ? "#a66eae" : "#4b83a2";
+        ctx.fillRect(-pw / 2 + 1, 14, pw - 2, ph - 26);
+        ctx.fillStyle = "#d9aa7a";
+        ctx.fillRect(-pw / 2 + 2, 0, pw - 4, 16);
+        ctx.fillStyle = "#51392f";
+        ctx.fillRect(-pw / 2 + 2, 0, pw - 4, 5);
+        ctx.fillStyle = "#24313a";
+        ctx.fillRect(5, 7, 3, 3);
+        ctx.restore();
+        if (name) {
+          ctx.save();
+          ctx.font = "bold 11px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillStyle = "#17211ddd";
+          const labelWidth = ctx.measureText(name).width + 12;
+          ctx.fillRect(sx - labelWidth / 2, sy - 17, labelWidth, 15);
+          ctx.fillStyle = "#fff";
+          ctx.fillText(name, sx, sy - 5);
+          ctx.restore();
+        }
+      }
+
+      function drawZombie(zombie) {
+        const sx = (zombie.x - cameraX) * TILE;
+        const sy = (zombie.y - cameraY) * TILE;
+        const w = zombie.w * TILE;
+        const h = zombie.h * TILE;
+        const step = Math.sin(zombie.walk * 2) * 2;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.scale(zombie.facing, 1);
+        ctx.fillStyle = "#26352a";
+        ctx.fillRect(-w * .38, h - 11 + step, w * .35, 11);
+        ctx.fillRect(w * .05, h - 11 - step, w * .35, 11);
+        ctx.fillStyle = mode === "fruit" ? "#8a553b" : "#527d4c";
+        ctx.fillRect(-w * .45, 17, w * .9, h - 27);
+        ctx.fillStyle = mode === "fruit" ? "#d09a58" : "#70955c";
+        ctx.fillRect(-w * .4, 1, w * .8, 18);
+        ctx.fillStyle = mode === "fruit" ? "#e8d9b0" : "#a52532";
+        ctx.fillRect(w * .16, 7, 3, 3);
+        ctx.fillStyle = mode === "fruit" ? "#7b442e" : "#527d4c";
+        ctx.fillRect(w * .25, 22, w * .4, 6);
+        ctx.restore();
+        if (zombie.hp < 3) {
+          ctx.fillStyle = "#1b2020";
+          ctx.fillRect(sx - w / 2, sy - 7, w, 3);
+          ctx.fillStyle = "#e7685c";
+          ctx.fillRect(sx - w / 2, sy - 7, w * zombie.hp / 3, 3);
+        }
+      }
+
+      function drawActors() {
+        if (fruitPulse > 0) {
+          const sx = (player.x - cameraX) * TILE;
+          const sy = (player.y + player.h / 2 - cameraY) * TILE;
+          ctx.save();
+          ctx.globalAlpha = fruitPulse / .45;
+          ctx.strokeStyle = "#ffdc78";
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(sx, sy, (6 - fruitPulse * 4) * TILE, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (mode === "mystery") {
+          for (const clue of mysteryClues) {
+            if (clue.collected) continue;
+            const sx = (clue.x - cameraX) * TILE;
+            const sy = (clue.y - cameraY) * TILE;
+            ctx.save();
+            ctx.shadowColor = "#f4d67b";
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = "#f4d67b";
+            ctx.beginPath();
+            ctx.arc(sx, sy, 7 + Math.sin(elapsed * 4 + clue.x) * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+          if (mysteryRevealed) {
+            const sx = (mysteryExitX - cameraX) * TILE;
+            const sy = (surfaceAt(Math.floor(mysteryExitX)) - cameraY) * TILE;
+            ctx.save();
+            ctx.strokeStyle = "#9fe5c3";
+            ctx.lineWidth = 4;
+            ctx.shadowColor = "#7fffd0";
+            ctx.shadowBlur = 18;
+            ctx.strokeRect(sx - 16, sy - 62, 32, 62);
+            ctx.fillStyle = "#d8fff0";
+            ctx.font = "bold 12px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("SORTIE", sx, sy - 70);
+            ctx.restore();
+          }
+          for (const npc of mysteryNPCs) {
+            const label = npc.killer && mysteryRevealed ? `${npc.name} · ASSASSIN` : npc.name;
+            drawActor(npc.x, npc.y, npc.facing, label, true, npc.walk, true);
+            if (npc.killer && mysteryStun > 0) {
+              const sx = (npc.x - cameraX) * TILE;
+              const sy = (npc.y - cameraY) * TILE - 9;
+              ctx.fillStyle = "#ffe994";
+              ctx.font = "bold 12px system-ui, sans-serif";
+              ctx.textAlign = "center";
+              ctx.fillText("✦", sx, sy);
+            }
+          }
+        }
+        for (const zombie of zombies) drawZombie(zombie);
+        for (const remote of remotePlayers.values()) {
+          drawActor(remote.x, remote.y, remote.facing || 1, remote.name || "Joueur", true);
+        }
+        drawActor(player.x, player.y, player.facing, playerName, false, player.walk, player.grounded);
+      }
+
+      function sendBlockUpdate(x, y, block) {
+        sendNetwork({ type: "block", x, y, block });
+      }
+
+      types.forEach((type, index) => {
+        const slot = document.createElement("button");
+        slot.type = "button";
+        slot.className = "bag-slot";
+        slot.innerHTML = `<span class="swatch" style="background:${info[type].swatch}"></span><span class="bag-count"></span><span class="bag-name">${info[type].name}</span>`;
+        slot.addEventListener("click", () => {
+          if (inventory[type] < 1) return;
+          selectBlock(index);
+          closeBag();
+          showToast(`${info[type].name} sélectionné`);
+        });
+        bagGrid.append(slot);
+        bagSlots.push(slot);
+      });
+      for (let i = 0; i < 15; i++) {
+        const emptySlot = document.createElement("div");
+        emptySlot.className = "bag-empty";
+        emptySlot.setAttribute("aria-hidden", "true");
+        bagGrid.append(emptySlot);
+      }
+      updateInventory();
+      for (const recipe of recipes) {
+        const row = document.createElement("article");
+        row.className = "recipe";
+        const costs = Object.entries(recipe.costs)
+          .map(([material, amount]) => `${amount} ${info[material].name.toLowerCase()}`)
+          .join(" + ");
+        row.innerHTML = `<div><h3>${info[recipe.output].name} ×${recipe.amount}</h3><p>Coût : ${costs}</p></div><button type="button" data-recipe="${recipe.id}"></button>`;
+        row.querySelector("button").addEventListener("click", () => craft(recipe.id));
+        recipeList.append(row);
+      }
+      refreshRecipes();
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add("show");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => toast.classList.remove("show"), 1400);
+      }
+
+      function hasCollision(x, y) {
+        const left = Math.floor(x - player.w / 2 + .001);
+        const right = Math.floor(x + player.w / 2 - .001);
+        const top = Math.floor(y + .001);
+        const bottom = Math.floor(y + player.h - .001);
+        for (let bx = left; bx <= right; bx++) {
+          for (let by = top; by <= bottom; by++) {
+            if (blockAt(bx, by)) return true;
+          }
+        }
+        return false;
+      }
+
+      function updateHealth() {
+        healthFill.style.width = `${health}%`;
+        healthText.textContent = String(Math.ceil(health));
+      }
+
+      function startMysteryRound() {
+        const names = ["Mila", "Noah", "Lina", "Adam"];
+        const killerIndex = Math.floor(Math.random() * names.length);
+        mysteryNPCs.length = 0;
+        names.forEach((name, index) => {
+          const x = player.x + 8 + index * 5;
+          mysteryNPCs.push({
+            name,
+            x,
+            homeX: x,
+            y: surfaceAt(Math.floor(x)) - player.h,
+            facing: -1,
+            walk: index * 1.7,
+            killer: index === killerIndex
+          });
+        });
+        mysteryKiller = mysteryNPCs.find(npc => npc.killer).name;
+        mysteryClues = [5, 11, 17].map(offset => {
+          const x = Math.floor(player.x + offset);
+          return { x, y: surfaceAt(x) - .85, collected: false };
+        });
+        mysteryTime = 150;
+        mysteryRevealed = false;
+        mysteryFinished = false;
+        mysteryExitX = player.x + 27;
+        mysteryStunCooldown = 0;
+        mysteryStun = 0;
+      }
+
+      function startMode(selectedMode) {
+        mode = selectedMode;
+        document.body.dataset.mode = mode;
+        running = true;
+        bagOpen = false;
+        craftOpen = false;
+        chatOpen = false;
+        bagOverlay.classList.add("hidden");
+        craftOverlay.classList.add("hidden");
+        chatPanel.classList.add("hidden");
+        overlay.classList.add("hidden");
+        player.x = 0;
+        player.y = surfaceAt(0) - player.h;
+        player.vx = 0;
+        player.vy = 0;
+        player.grounded = false;
+        cameraX = 0;
+        cameraY = 0;
+        health = 100;
+        damageCooldown = 0;
+        attackCooldown = 0;
+        fruitBounties = 0;
+        fruitCooldown = 0;
+        fruitPulse = 0;
+        zombies.length = 0;
+        updateHealth();
+
+        if (mode === "fruit") {
+          brand.innerHTML = "FRUIT SEAS <span style=\"font-weight:400;opacity:.72\">/ AVENTURE</span>";
+          help.innerHTML = "<b>Q / D ou ← / →</b> · marcher<br><b>Espace / Z / ↑</b> · sauter<br><b>Clic gauche</b> · attaquer les pirates<br><b>F</b> · pouvoir du fruit · <b>Maj</b> · courir<br><b>T</b> · chat multijoueur";
+          modeHud.classList.remove("hidden");
+          spawnZombie();
+          spawnZombie();
+          nextZombieSpawn = 4;
+        } else if (mode === "mystery") {
+          brand.innerHTML = "MYSTERY MANOR <span style=\"font-weight:400;opacity:.72\">/ ENQUÊTE</span>";
+          help.innerHTML = "<b>Q / D ou ← / →</b> · marcher<br><b>Espace / Z / ↑</b> · sauter<br><b>E</b> · examiner un indice<br><b>F</b> · étourdir l'assassin (après 1 indice)<br><b>Maj</b> · courir · <b>T</b> · chat";
+          modeHud.classList.remove("hidden");
+          startMysteryRound();
+        } else {
+          brand.innerHTML = "TERRA <span style=\"font-weight:400;opacity:.72\">/ 2D</span>";
+          help.innerHTML = "<b>Q / D ou ← / →</b> · marcher<br><b>Espace / Z / ↑</b> · sauter<br><b>Clic gauche</b> · miner / attaquer<br><b>Clic droit</b> · poser un bloc<br><b>1–7</b> · matériaux · <b>E</b> · sac · <b>C</b> · craft · <b>T</b> · chat";
+          modeHud.classList.add("hidden");
+          nextZombieSpawn = 8;
+        }
+        updateModeHud();
+        document.activeElement.blur();
+        lastFrame = performance.now();
+        connectOnline();
+      }
+
+      function returnToMenu() {
+        if (!running) return;
+        running = false;
+        modeHud.classList.add("hidden");
+        document.body.dataset.mode = "";
+        overlay.classList.remove("hidden");
+      }
+
+      function updateModeHud() {
+        if (mode === "fruit") {
+          modeHud.textContent = `Prime : ${fruitBounties}/5 pirates · Pouvoir du fruit : ${fruitCooldown > 0 ? `${Math.ceil(fruitCooldown)} s` : "F prêt"}`;
+          return;
+        }
+        if (mode === "mystery") {
+          const clues = mysteryClues.filter(clue => clue.collected).length;
+          const remaining = Math.max(0, Math.ceil(mysteryTime));
+          const timer = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
+          const objective = mysteryFinished
+            ? "Manche terminée · appuie sur R pour rejouer"
+            : mysteryRevealed
+              ? `Assassin : ${mysteryKiller} · rejoins la sortie lumineuse`
+              : `Indices : ${clues}/3 · trouve l'assassin · ${timer}`;
+          modeHud.textContent = objective;
+        }
+      }
+
+      function useFruitPower() {
+        if (mode !== "fruit" || !running) return;
+        if (fruitCooldown > 0) {
+          showToast(`Pouvoir prêt dans ${Math.ceil(fruitCooldown)} s`);
+          return;
+        }
+        fruitCooldown = 8;
+        fruitPulse = .45;
+        let defeated = 0;
+        for (let index = zombies.length - 1; index >= 0; index--) {
+          const pirate = zombies[index];
+          if (Math.hypot(pirate.x - player.x, pirate.y - player.y) > 6) continue;
+          pirate.hp -= 2;
+          if (pirate.hp <= 0) {
+            zombies.splice(index, 1);
+            defeated++;
+          }
+        }
+        if (defeated) awardPirateBounty(defeated);
+        showToast(defeated ? `Éruption du fruit · ${defeated} pirate(s) vaincu(s)` : "Éruption du fruit !");
+      }
+
+      function awardPirateBounty(amount = 1) {
+        const previousBounties = fruitBounties;
+        fruitBounties = Math.min(5, fruitBounties + amount);
+        if (previousBounties < 5 && fruitBounties === 5) {
+          health = Math.min(100, health + 20);
+          updateHealth();
+          showToast("Prime complète · +20 PV");
+        } else {
+          showToast(`Pirate vaincu · prime ${fruitBounties}/5`);
+        }
+      }
+
+      function collectMysteryClue() {
+        if (mode !== "mystery" || mysteryFinished) return;
+        const clue = mysteryClues.find(item => !item.collected
+          && Math.abs(item.x - player.x) < 1.5
+          && Math.abs(item.y - (player.y + player.h / 2)) < 2.4);
+        if (!clue) {
+          showToast("Approche-toi d'un indice lumineux.");
+          return;
+        }
+        clue.collected = true;
+        const found = mysteryClues.filter(item => item.collected).length;
+        if (found === 3) {
+          mysteryRevealed = true;
+          showToast(`Les indices désignent ${mysteryKiller} ! Rejoins la sortie.`);
+        } else {
+          showToast(`Indice trouvé · ${found}/3`);
+        }
+      }
+
+      function useMysteryStun() {
+        if (mode !== "mystery" || mysteryFinished) return;
+        if (!mysteryClues.some(clue => clue.collected)) {
+          showToast("Trouve un indice avant d'utiliser ton flash.");
+          return;
+        }
+        if (mysteryStunCooldown > 0) {
+          showToast(`Flash prêt dans ${Math.ceil(mysteryStunCooldown)} s`);
+          return;
+        }
+        mysteryStunCooldown = 12;
+        mysteryStun = 4;
+        showToast("Flash ! L'assassin est étourdi.");
+      }
+
+      function spawnZombie() {
+        if (zombies.length >= 6) return;
+        const side = Math.random() < .5 ? -1 : 1;
+        const x = Math.floor(player.x + side * (12 + Math.random() * 12));
+        zombies.push({
+          id: ++zombieId,
+          x,
+          y: surfaceAt(x) - 1.55,
+          w: .82,
+          h: 1.55,
+          hp: 3,
+          vy: 0,
+          facing: -side,
+          attackTimer: 0,
+          walk: Math.random() * 6
+        });
+      }
+
+      function updateZombies(dt) {
+        if (mode === "mystery") {
+          updateMystery(dt);
+          updateModeHud();
+          return;
+        }
+        const phase = (elapsed / 180 + 1 / 3) % 1;
+        const isNight = Math.sin(phase * Math.PI * 2 - Math.PI / 2) < -.12;
+        nextZombieSpawn -= dt;
+        if ((mode === "fruit" || isNight) && nextZombieSpawn <= 0) {
+          spawnZombie();
+          nextZombieSpawn = mode === "fruit" ? 7 + Math.random() * 3 : 11 + Math.random() * 7;
+        } else if (mode !== "fruit" && !isNight) {
+          nextZombieSpawn = Math.min(nextZombieSpawn, 5);
+        }
+
+        damageCooldown = Math.max(0, damageCooldown - dt);
+        attackCooldown = Math.max(0, attackCooldown - dt);
+        fruitCooldown = Math.max(0, fruitCooldown - dt);
+        fruitPulse = Math.max(0, fruitPulse - dt);
+        for (let index = zombies.length - 1; index >= 0; index--) {
+          const zombie = zombies[index];
+          const direction = Math.sign(player.x - zombie.x);
+          const surface = surfaceAt(Math.floor(zombie.x));
+          zombie.facing = direction || zombie.facing;
+          if (Math.abs(player.x - zombie.x) > .82) {
+            const nextX = zombie.x + direction * 1.25 * dt;
+            const aheadX = Math.floor(nextX + direction * zombie.w / 2);
+            const feetY = Math.floor(zombie.y + zombie.h - .02);
+            const headY = Math.floor(zombie.y + .2);
+            if (blockAt(aheadX, feetY) || blockAt(aheadX, headY)) {
+              if (zombie.y + zombie.h >= surfaceAt(Math.floor(player.x)) - 1) zombie.vy = -6.3;
+            } else {
+              zombie.x = nextX;
+            }
+            zombie.walk += Math.abs(direction) * dt * 4;
+          }
+          zombie.vy = Math.min(zombie.vy + 24 * dt, 16);
+          zombie.y += zombie.vy * dt;
+          const ground = surface - zombie.h;
+          if (zombie.y >= ground) {
+            zombie.y = ground;
+            zombie.vy = 0;
+          }
+          zombie.attackTimer = Math.max(0, zombie.attackTimer - dt);
+          const touching = Math.abs(player.x - zombie.x) < .78
+            && player.y + player.h > zombie.y + .18
+            && player.y < zombie.y + zombie.h;
+          if (touching && zombie.attackTimer <= 0 && damageCooldown <= 0) {
+            zombie.attackTimer = 1;
+            damageCooldown = 1;
+            health = Math.max(0, health - 14);
+            updateHealth();
+            showToast(mode === "fruit" ? "Un pirate t'a frappé !" : "Un zombie t'a frappé !");
+            if (health <= 0) {
+              health = 100;
+              player.x = Math.floor(zombie.x - zombie.facing * 4);
+              player.y = surfaceAt(Math.floor(player.x)) - player.h;
+              player.vx = 0;
+              player.vy = 0;
+              updateHealth();
+              showToast("Tu reprends ton souffle au camp.");
+            }
+          }
+          if (Math.abs(zombie.x - player.x) > 60) zombies.splice(index, 1);
+        }
+        updateModeHud();
+      }
+
+      function updateMystery(dt) {
+        if (mysteryFinished) return;
+        mysteryTime -= dt;
+        mysteryStunCooldown = Math.max(0, mysteryStunCooldown - dt);
+        mysteryStun = Math.max(0, mysteryStun - dt);
+        for (const npc of mysteryNPCs) {
+          if (npc.killer && mysteryStun <= 0) {
+            const direction = Math.sign(player.x - npc.x);
+            npc.facing = direction || npc.facing;
+            npc.x += direction * 1.15 * dt;
+          } else if (!npc.killer) {
+            npc.x = npc.homeX + Math.sin(elapsed * .8 + npc.walk) * 1.1;
+            npc.facing = Math.cos(elapsed * .8 + npc.walk) < 0 ? -1 : 1;
+          }
+          npc.y = surfaceAt(Math.floor(npc.x)) - player.h;
+          npc.walk += dt * 3;
+        }
+
+        damageCooldown = Math.max(0, damageCooldown - dt);
+        const killer = mysteryNPCs.find(npc => npc.killer);
+        if (killer && mysteryStun <= 0 && Math.abs(killer.x - player.x) < .9 && damageCooldown <= 0) {
+          damageCooldown = 1.1;
+          health = Math.max(0, health - 25);
+          updateHealth();
+          showToast("L'assassin t'a repéré !");
+          if (health <= 0) {
+            mysteryFinished = true;
+            showToast("Tu as été attrapé · appuie sur R pour rejouer");
+          }
+        }
+
+        if (mysteryRevealed && player.x >= mysteryExitX) {
+          mysteryFinished = true;
+          showToast("Enquête résolue · tu as échappé à l'assassin !");
+        } else if (mysteryTime <= 0) {
+          mysteryFinished = true;
+          showToast("Le temps est écoulé · appuie sur R pour rejouer");
+        }
+      }
+
+      function attackZombieAtMouse() {
+        if (!mouse.inside || attackCooldown > 0) return false;
+        const pointer = screenToWorld(mouse.x, mouse.y);
+        const zombie = zombies.find(item => pointer.x >= item.x - item.w / 2
+          && pointer.x < item.x + item.w / 2
+          && pointer.y >= item.y
+          && pointer.y < item.y + item.h
+          && Math.hypot(item.x - player.x, item.y + item.h / 2 - (player.y + player.h / 2)) < 3);
+        if (!zombie) return false;
+        attackCooldown = .42;
+        zombie.hp--;
+        if (zombie.hp <= 0) {
+          zombies.splice(zombies.indexOf(zombie), 1);
+          if (mode === "fruit") {
+            awardPirateBounty();
+          } else {
+            inventory.wood++;
+            updateInventory();
+            showToast("Zombie vaincu · +1 bois");
+          }
+        } else {
+          showToast(mode === "fruit" ? "Pirate touché !" : "Touché !");
+        }
+        return true;
+      }
+
+      function updatePlayer(dt) {
+        if (!running || bagOpen || craftOpen || chatOpen || (mode === "mystery" && mysteryFinished)) return;
+        const left = keys.has("KeyA") || keys.has("KeyQ") || keys.has("ArrowLeft");
+        const right = keys.has("KeyD") || keys.has("ArrowRight");
+        const direction = Number(right) - Number(left);
+        const speed = keys.has("ShiftLeft") || keys.has("ShiftRight") ? 7.2 : 5.2;
+        player.vx = direction * speed;
+        if (direction) player.facing = direction;
+        const oldX = player.x;
+        player.x += player.vx * dt;
+        if (hasCollision(player.x, player.y)) player.x = oldX;
+        player.walk += Math.abs(player.vx) * dt;
+
+        player.vy = Math.min(player.vy + 24 * dt, 18);
+        const oldY = player.y;
+        player.y += player.vy * dt;
+        if (hasCollision(player.x, player.y)) {
+          player.y = oldY;
+          if (player.vy > 0) player.grounded = true;
+          player.vy = 0;
+        } else {
+          player.grounded = false;
+        }
+        if (player.y > surfaceAt(Math.floor(player.x)) + 32) {
+          player.x = 0;
+          player.y = surfaceAt(0) - player.h;
+          player.vy = 0;
+        }
+        networkTimer += dt;
+        if (networkTimer >= .1) {
+          networkTimer = 0;
+          sendNetwork({ type: "move", x: player.x, y: player.y, facing: player.facing });
+        }
+      }
+
+      function jump() {
+        if (running && player.grounded) {
+          player.vy = -9.5;
+          player.grounded = false;
+        }
+      }
+
+      function getCamera() {
+        const worldW = width / TILE;
+        const worldH = height / TILE;
+        const desiredX = player.x - worldW * .42;
+        const desiredY = player.y + player.h * .5 - worldH * .5;
+        cameraX += (desiredX - cameraX) * .12;
+        cameraY += (desiredY - cameraY) * .12;
+        cameraX = Math.max(-2, cameraX);
+        return { x: cameraX, y: cameraY };
+      }
+
+      function screenToWorld(px, py) {
+        return {
+          x: Math.floor(px / TILE + cameraX),
+          y: Math.floor(py / TILE + cameraY)
+        };
+      }
+
+      function withinReach(x, y) {
+        const dx = x + .5 - player.x;
+        const dy = y + .5 - (player.y + player.h * .5);
+        return Math.hypot(dx, dy) <= 5.3;
+      }
+
+      function updateTarget() {
+        if (!mouse.inside) {
+          targetBlock = null;
+          return;
+        }
+        const target = screenToWorld(mouse.x, mouse.y);
+        targetBlock = blockAt(target.x, target.y) && withinReach(target.x, target.y) ? target : null;
+      }
+
+      function overlapsPlayer(x, y) {
+        return player.x + player.w / 2 > x && player.x - player.w / 2 < x + 1
+          && player.y + player.h > y && player.y < y + 1;
+      }
+
+      function interact(button) {
+        if (!running) return;
+        if (button === 0 && attackZombieAtMouse()) return;
+        updateTarget();
+        const hit = targetBlock;
+        if (!hit) return;
+        if (button === 0) {
+          const minedType = blockAt(hit.x, hit.y);
+          edits.set(keyOf(hit.x, hit.y), null);
+          overrides.delete(keyOf(hit.x, hit.y));
+          sendBlockUpdate(hit.x, hit.y, null);
+          const drop = types.includes(minedType) ? minedType : minedType === "leaves" ? "wood" : null;
+          if (drop) inventory[drop]++;
+          updateInventory();
+          showToast("Bloc cassé");
+          return;
+        }
+        if (button === 2) {
+          const centerX = player.x;
+          const centerY = player.y + player.h / 2;
+          const dx = hit.x + .5 - centerX;
+          const dy = hit.y + .5 - centerY;
+          let placeX = hit.x;
+          let placeY = hit.y;
+          if (Math.abs(dx) > Math.abs(dy)) placeX += dx > 0 ? -1 : 1;
+          else placeY += dy > 0 ? -1 : 1;
+          if (!withinReach(placeX, placeY)) return;
+          if (blockAt(placeX, placeY)) return;
+          if (inventory[types[selected]] < 1) {
+            showToast(`Tu n'as plus de ${info[types[selected]].name.toLowerCase()}`);
+            return;
+          }
+          if (overlapsPlayer(placeX, placeY)) {
+            showToast("Impossible de poser un bloc sur le personnage");
+            return;
+          }
+          edits.set(keyOf(placeX, placeY), types[selected]);
+          sendBlockUpdate(placeX, placeY, types[selected]);
+          inventory[types[selected]]--;
+          updateInventory();
+          showToast(`${info[types[selected]].name} posé`);
+        }
+      }
+
+      function drawSky(time) {
+        const day = Math.max(0, Math.sin(time * Math.PI * 2 - Math.PI / 2));
+        const dusk = Math.max(0, 1 - Math.abs(Math.sin(time * Math.PI * 2 - Math.PI / 2)) * 4);
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        if (day > .35) {
+          sky.addColorStop(0, "#73b8e0");
+          sky.addColorStop(1, "#d3ebdd");
+        } else if (dusk > .3) {
+          sky.addColorStop(0, "#405b88");
+          sky.addColorStop(.64, "#d78d79");
+          sky.addColorStop(1, "#eac68b");
+        } else {
+          sky.addColorStop(0, "#101a38");
+          sky.addColorStop(1, "#354567");
+        }
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, height);
+        const night = 1 - day;
+        if (night > .55) {
+          ctx.save();
+          for (const star of stars) {
+            const sx = ((star.x * width / 1000 - elapsed * 2) % width + width) % width;
+            ctx.globalAlpha = (night - .45) * star.alpha;
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(sx, star.y * height / 100, star.radius, star.radius);
+          }
+          ctx.restore();
+        }
+        const sunX = ((time * width * 1.4 + width * .1) % (width * 1.4)) - width * .2;
+        const sunY = height * (.58 - day * .4);
+        ctx.save();
+        ctx.globalAlpha = .15 + day * .85;
+        ctx.fillStyle = "#ffe6a3";
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = .25 + night * .75;
+        ctx.fillStyle = "#e1e8ff";
+        ctx.beginPath();
+        ctx.arc(width - sunX, height - sunY, 17, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        const worldW = width / TILE;
+        for (let layer = 0; layer < 3; layer++) {
+          ctx.beginPath();
+          const parallax = cameraX * (.12 + layer * .13);
+          const base = height * (.62 + layer * .1) - cameraY * TILE * (.12 + layer * .08);
+          ctx.moveTo(0, height);
+          ctx.lineTo(0, base);
+          for (let sx = 0; sx <= width + 5; sx += 5) {
+            const wx = sx / TILE + parallax;
+            const ridge = valueNoise(wx * (.05 + layer * .02) + layer * 50) * (16 + layer * 9);
+            ctx.lineTo(sx, base + ridge);
+          }
+          ctx.lineTo(width, height);
+          ctx.closePath();
+          ctx.fillStyle = ["#9ac4be", "#739d91", "#587861"][layer];
+          ctx.globalAlpha = [.3, .45, .58][layer] * (.7 + day * .3);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        for (const cloud of clouds) {
+          const cx = ((cloud.x * TILE - elapsed * 8 + width) % (width + cloud.width * TILE)) - 50;
+          const cy = cloud.y * TILE;
+          ctx.fillStyle = night > .5 ? "#8793ad" : "#fff";
+          ctx.globalAlpha = night > .5 ? .22 : .48;
+          ctx.fillRect(cx, cy + 7, cloud.width * TILE, 11);
+          ctx.fillRect(cx + 13, cy, cloud.width * TILE * .48, 18);
+          ctx.fillRect(cx + cloud.width * TILE * .5, cy + 3, cloud.width * TILE * .36, 15);
+        }
+        ctx.globalAlpha = 1;
+        return { day, night };
+      }
+
+      function drawBlock(x, y, type) {
+        const sx = Math.floor((x - cameraX) * TILE);
+        const sy = Math.floor((y - cameraY) * TILE);
+        if (sx < -TILE || sx > width || sy < -TILE || sy > height) return;
+        const material = info[type] || info.stone;
+        ctx.fillStyle = material.side;
+        ctx.fillRect(sx, sy, TILE, TILE);
+        ctx.fillStyle = material.top;
+        ctx.fillRect(sx, sy, TILE, type === "grass" || type === "leaves" ? 7 : 3);
+        if (type === "grass") {
+          ctx.fillStyle = "#52783b";
+          ctx.fillRect(sx, sy + 7, TILE, 3);
+        }
+        ctx.fillStyle = "#ffffff13";
+        ctx.fillRect(sx + 2, sy + 2, 2, TILE - 3);
+        ctx.fillStyle = "#00000012";
+        ctx.fillRect(sx + TILE - 3, sy + 3, 2, TILE - 3);
+        const grainCount = type === "stone" ? 4 : type === "sand" ? 5 : 2;
+        for (let i = 0; i < grainCount; i++) {
+          const gx = sx + 4 + Math.floor(hashInt(x * 701 + y * 37 + i * 17) * 24);
+          const gy = sy + 6 + Math.floor(hashInt(y * 401 + x * 19 + i * 13) * 22);
+          ctx.fillStyle = i % 2 ? "#ffffff1c" : "#00000017";
+          ctx.fillRect(gx, gy, 2, 2);
+        }
+        ctx.strokeStyle = "#29362d38";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx + .5, sy + .5, TILE - 1, TILE - 1);
+      }
+
+      function drawWorld() {
+        const left = Math.floor(cameraX) - 2;
+        const right = Math.ceil(cameraX + width / TILE) + 2;
+        const top = Math.max(0, Math.floor(cameraY) - 1);
+        const bottom = Math.ceil(cameraY + height / TILE) + 2;
+        for (let x = left; x <= right; x++) {
+          for (let y = top; y <= bottom; y++) {
+            const type = blockAt(x, y);
+            if (type) drawBlock(x, y, type);
+          }
+        }
+      }
+
+      function drawPlayer() {
+        const sx = (player.x - cameraX) * TILE;
+        const sy = (player.y - cameraY) * TILE;
+        const pw = player.w * TILE;
+        const ph = player.h * TILE;
+        const walking = player.grounded && Math.abs(player.vx) > .1;
+        const step = walking ? Math.sin(player.walk * 8) * 3 : 0;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.scale(player.facing, 1);
+        ctx.fillStyle = "#263640";
+        ctx.fillRect(-pw / 2 + 3, ph - 12 + step, 8, 12);
+        ctx.fillRect(1, ph - 12 - step, 8, 12);
+        ctx.fillStyle = "#4b83a2";
+        ctx.fillRect(-pw / 2 + 1, 14, pw - 2, ph - 26);
+        ctx.fillStyle = "#d9aa7a";
+        ctx.fillRect(-pw / 2 + 2, 0, pw - 4, 16);
+        ctx.fillStyle = "#51392f";
+        ctx.fillRect(-pw / 2 + 2, 0, pw - 4, 5);
+        ctx.fillStyle = "#24313a";
+        ctx.fillRect(5, 7, 3, 3);
+        ctx.fillStyle = "#ffffff28";
+        ctx.fillRect(-pw / 2 + 3, 17, 3, ph - 34);
+        ctx.restore();
+      }
+
+      function drawTarget() {
+        if (!targetBlock) return;
+        const sx = (targetBlock.x - cameraX) * TILE;
+        const sy = (targetBlock.y - cameraY) * TILE;
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 3]);
+        ctx.strokeRect(sx + 2, sy + 2, TILE - 4, TILE - 4);
+        ctx.restore();
+      }
+
+      function drawHud(day) {
+        const tint = Math.max(0, .35 - day) * .34;
+        if (tint > 0) {
+          ctx.fillStyle = `rgba(12, 19, 46, ${tint})`;
+          ctx.fillRect(0, 0, width, height);
+        }
+        const minute = Math.floor((480 + elapsed / 180 * 1440) % 1440);
+        const hh = String(Math.floor(minute / 60)).padStart(2, "0");
+        const mm = String(minute % 60).padStart(2, "0");
+        timeLabel.textContent = `Jour ${Math.floor(elapsed / 180) + 1} · ${hh}:${mm}`;
+      }
+
+      function frame(now) {
+        requestAnimationFrame(frame);
+        const dt = Math.min((now - lastFrame) / 1000, .04);
+        lastFrame = now;
+        elapsed += dt;
+        updatePlayer(dt);
+        if (running) updateZombies(dt);
+        getCamera();
+        const light = drawSky((elapsed / 180 + 1 / 3) % 1);
+        drawWorld();
+        updateTarget();
+        drawTarget();
+        drawActors();
+        drawHud(light.day);
+      }
+
+      document.querySelectorAll(".mode-start").forEach(button => {
+        button.addEventListener("click", () => startMode(button.dataset.mode));
+      });
+      bagToggle.addEventListener("click", toggleBag);
+      document.querySelector("#bag-close").addEventListener("click", closeBag);
+      craftToggle.addEventListener("click", toggleCraft);
+      document.querySelector("#craft-close").addEventListener("click", closeCraft);
+      bagOverlay.addEventListener("mousedown", event => {
+        if (event.target === bagOverlay) closeBag();
+      });
+      craftOverlay.addEventListener("mousedown", event => {
+        if (event.target === craftOverlay) closeCraft();
+      });
+      chatToggle.addEventListener("click", () => toggleChat(true));
+      document.querySelector("#menu-toggle").addEventListener("click", returnToMenu);
+      chatForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const text = chatInput.value.trim().slice(0, 240);
+        if (!text) return;
+        if (socket?.readyState !== WebSocket.OPEN) {
+          showToast("Le chat est indisponible hors ligne.");
+          return;
+        }
+        sendNetwork({ type: "chat", text });
+        chatInput.value = "";
+      });
+      document.addEventListener("keydown", event => {
+        if (event.target === chatInput) {
+          if (event.code === "Escape" && chatOpen) toggleChat();
+          return;
+        }
+        if (event.target === nameInput) return;
+        keys.add(event.code);
+        if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) event.preventDefault();
+        if (event.code === "KeyT" && running && !event.repeat) {
+          event.preventDefault();
+          toggleChat(true);
+          return;
+        }
+        if (event.code === "KeyF" && running && !event.repeat) {
+          if (mode === "fruit") useFruitPower();
+          else if (mode === "mystery") useMysteryStun();
+          return;
+        }
+        if (event.code === "KeyR" && running && mode === "mystery" && mysteryFinished && !event.repeat) {
+          startMysteryRound();
+          health = 100;
+          updateHealth();
+          player.x = 0;
+          player.y = surfaceAt(0) - player.h;
+          return;
+        }
+        if (event.code === "Escape" && chatOpen) {
+          toggleChat();
+          return;
+        }
+        if (event.code.startsWith("Digit")) {
+          const index = Number(event.code.slice(5)) - 1;
+          if (index >= 0 && index < types.length) selectBlock(index);
+        }
+        if (event.code === "KeyE" && running) {
+          if (mode === "mystery") {
+            collectMysteryClue();
+            return;
+          }
+          if (craftOpen) closeCraft();
+          toggleBag();
+          return;
+        }
+        if (event.code === "KeyC" && running) {
+          if (bagOpen) closeBag();
+          toggleCraft();
+          return;
+        }
+        if (event.code === "Escape" && craftOpen) {
+          closeCraft();
+          return;
+        }
+        if (event.code === "Escape" && bagOpen) {
+          closeBag();
+          return;
+        }
+        if (bagOpen) return;
+        if (["Space", "KeyW", "KeyZ", "ArrowUp"].includes(event.code) && !event.repeat) jump();
+        if (event.code === "Escape" && running) {
+          returnToMenu();
+        }
+      });
+      document.addEventListener("keyup", event => keys.delete(event.code));
+      addEventListener("blur", () => keys.clear());
+      canvas.addEventListener("mousemove", event => {
+        const rect = canvas.getBoundingClientRect();
+        mouse = { x: event.clientX - rect.left, y: event.clientY - rect.top, inside: true };
+      });
+      canvas.addEventListener("mouseenter", () => { mouse.inside = true; });
+      canvas.addEventListener("mouseleave", () => { mouse.inside = false; targetBlock = null; });
+      canvas.addEventListener("mousedown", event => {
+        event.preventDefault();
+        interact(event.button);
+      });
+      canvas.addEventListener("contextmenu", event => event.preventDefault());
+
+      player.x = 0;
+      player.y = surfaceAt(0) - player.h;
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

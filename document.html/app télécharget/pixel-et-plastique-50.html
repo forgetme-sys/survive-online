@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel &amp; Plastique — 50 cartouches en stock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14172B;
+    --surface:#1E2244;
+    --surface-2:#262B52;
+    --paper:#F1ECDD;
+    --paper-dim:#B9B4A4;
+    --mustard:#E8A93E;
+    --coral:#E8543E;
+    --sage:#7FA383;
+    --line:#3A3F63;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--paper);
+    font-family:'Space Grotesk',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Bungee',cursive;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  header{
+    position:sticky; top:0; z-index:20;
+    background:rgba(20,23,43,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:2px solid var(--line);
+    padding:18px 28px;
+    animation:slideDown .5s ease;
+  }
+  @keyframes slideDown{ from{transform:translateY(-100%);} to{transform:translateY(0);} }
+  .header-row{display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap; max-width:1280px; margin:0 auto;}
+  .logo{display:flex; align-items:baseline; gap:12px;}
+  .logo h1{font-size:22px; margin:0; color:var(--mustard); letter-spacing:0.5px;}
+  .logo span{font-size:12px; color:var(--sage);}
+  .search-wrap{position:relative; width:280px; max-width:100%;}
+  .search-wrap input{
+    width:100%; padding:10px 14px 10px 36px; border-radius:6px;
+    border:1px solid var(--line); background:var(--surface); color:var(--paper);
+    font-family:inherit; font-size:14px;
+  }
+  .search-wrap input:focus{outline:2px solid var(--mustard); outline-offset:1px;}
+  .search-wrap svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:0.6;}
+  .header-actions{display:flex; align-items:center; gap:14px;}
+  .credits-badge{
+    display:flex; align-items:center; gap:6px; background:var(--surface);
+    border:1px solid var(--line); color:var(--mustard); padding:8px 12px;
+    border-radius:20px; font-size:13px; white-space:nowrap;
+  }
+
+  .tabs{max-width:1280px; margin:0 auto; padding:16px 28px 0; display:flex; gap:8px;}
+  .tab{
+    background:none; border:none; border-bottom:2px solid transparent; color:var(--paper-dim);
+    font-family:inherit; font-size:14px; padding:8px 4px; cursor:pointer;
+    display:flex; align-items:center; gap:7px; transition:color .15s ease;
+  }
+  .tab:hover{color:var(--paper);}
+  .tab.active{color:var(--mustard); border-bottom-color:var(--mustard);}
+  .tab-count{
+    background:var(--surface-2); color:var(--paper-dim); font-size:10px;
+    padding:1px 7px; border-radius:10px;
+  }
+  .tab.active .tab-count{color:var(--mustard);}
+
+  .toolbar{max-width:1280px; margin:0 auto; padding:18px 28px 4px;}
+  .chips{display:flex; gap:8px; overflow-x:auto; padding-bottom:10px;}
+  .chip{
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+    padding:6px 12px; border-radius:20px; border:1px solid var(--line);
+    background:var(--surface); font-size:13px; cursor:pointer; color:var(--paper);
+    font-family:inherit; transition:transform .12s ease, background .12s ease;
+  }
+  .chip:hover{transform:translateY(-1px);}
+  .chip .dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .chip.active{border-color:currentColor; background:var(--surface-2);}
+  .chip:focus-visible{outline:2px solid var(--mustard);}
+
+  .toolbar-meta{display:flex; align-items:center; justify-content:space-between; margin-top:6px; flex-wrap:wrap; gap:10px;}
+  .count{font-size:13px; color:var(--paper-dim);}
+  select{
+    background:var(--surface); color:var(--paper); border:1px solid var(--line);
+    border-radius:6px; padding:8px 10px; font-family:inherit; font-size:13px;
+  }
+
+  .grid{
+    max-width:1280px; margin:0 auto; padding:12px 28px 40px;
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    overflow:hidden; cursor:pointer; text-align:left; padding:0; color:inherit;
+    font-family:inherit; display:flex; flex-direction:column;
+    transition:transform .12s ease, box-shadow .12s ease;
+    opacity:0; animation:cardIn .45s ease forwards;
+  }
+  @keyframes cardIn{ from{opacity:0; transform:translateY(14px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .card:hover, .card:focus-visible{transform:translateY(-4px); box-shadow:0 8px 18px rgba(0,0,0,0.4);}
+  .card:focus-visible{outline:2px solid var(--mustard);}
+  .cover{
+    height:110px; display:flex; align-items:center; justify-content:center;
+    border-left:6px solid; position:relative; overflow:hidden;
+  }
+  .cover svg{opacity:0.9; animation:iconFloat 2.6s ease-in-out infinite;}
+  @keyframes iconFloat{ 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-4px) rotate(4deg);} }
+  .card:hover .cover svg{animation:iconSpin .8s ease-in-out;}
+  @keyframes iconSpin{ from{transform:rotate(0deg) scale(1);} 50%{transform:rotate(180deg) scale(1.15);} to{transform:rotate(360deg) scale(1);} }
+  .genre-tag{
+    position:absolute; top:6px; right:6px; font-size:10px; padding:2px 7px;
+    border-radius:10px; background:rgba(20,23,43,0.55); color:var(--paper);
+  }
+  .online-tag{
+    position:absolute; top:6px; left:6px; font-size:9px; padding:2px 7px;
+    border-radius:10px; background:rgba(20,23,43,0.6); color:var(--sage);
+    display:flex; align-items:center; gap:4px;
+  }
+  .online-dot{width:6px; height:6px; border-radius:50%; background:var(--sage); animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(127,163,131,.6);} 50%{opacity:.6; box-shadow:0 0 0 4px rgba(127,163,131,0);} }
+  .card-body{padding:10px 12px 12px; display:flex; flex-direction:column; gap:6px; flex:1;}
+  .card-title{font-size:13.5px; font-weight:600; line-height:1.3; margin:0;}
+  .card-sub{font-size:11px; color:var(--paper-dim); margin:0;}
+  .stars{display:flex; gap:1px;}
+  .row-between{display:flex; align-items:center; justify-content:space-between; margin-top:auto;}
+  .price{font-size:13px; color:var(--mustard);}
+  .plats{display:flex; gap:4px; flex-wrap:wrap;}
+  .plat{font-size:9px; padding:2px 5px; border:1px solid var(--line); border-radius:4px; color:var(--paper-dim);}
+
+  .pager{display:flex; align-items:center; justify-content:center; gap:14px; padding:0 28px 50px;}
+  .pager button{
+    background:var(--surface); border:1px solid var(--line); color:var(--paper);
+    padding:8px 12px; border-radius:6px; cursor:pointer; font-family:inherit;
+    transition:transform .1s ease;
+  }
+  .pager button:not(:disabled):hover{transform:translateY(-1px);}
+  .pager button:disabled{opacity:0.35; cursor:default;}
+  .pager span{font-size:13px; color:var(--paper-dim);}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,11,22,0.72); z-index:50;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation:fadeIn .18s ease;
+  }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .hidden{display:none;}
+  .modal{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    max-width:460px; width:100%; overflow:hidden;
+    animation:popIn .22s cubic-bezier(.2,.9,.3,1.3);
+  }
+  @keyframes popIn{ from{opacity:0; transform:scale(.92) translateY(8px);} to{opacity:1; transform:scale(1) translateY(0);} }
+  .modal-cover{height:160px; border-bottom:4px solid; display:flex; align-items:center; justify-content:center; position:relative;}
+  .modal-cover svg{animation:iconFloat 2.6s ease-in-out infinite;}
+  .modal-close{
+    position:absolute; top:10px; right:10px; background:rgba(20,23,43,0.6);
+    border:none; color:var(--paper); width:28px; height:28px; border-radius:50%;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .modal-body{padding:18px 20px 22px;}
+  .modal-body h2{margin:0 0 4px; font-size:18px;}
+  .modal-meta{font-size:12px; color:var(--paper-dim); margin-bottom:10px;}
+  .modal-desc{font-size:13.5px; line-height:1.6; color:var(--paper); margin-bottom:16px;}
+  .modal-foot{display:flex; align-items:center; justify-content:space-between;}
+  .shelf-btn{
+    background:var(--mustard); color:#2A1E08; border:none; padding:9px 16px;
+    border-radius:6px; font-weight:600; cursor:pointer; font-family:inherit; font-size:13px;
+    transition:transform .1s ease;
+  }
+  .shelf-btn:hover{transform:scale(1.04);}
+  .shelf-btn:disabled{opacity:.6; cursor:default; transform:none;}
+  .shelf-btn.play{background:var(--sage); color:#122015;}
+  .ghost-btn{
+    background:none; border:1px solid var(--line); color:var(--paper-dim);
+    padding:9px 14px; border-radius:6px; font-family:inherit; font-size:12px; cursor:pointer;
+  }
+  .ghost-btn:hover{color:var(--paper); border-color:var(--paper-dim);}
+  .btn-row{display:flex; align-items:center; gap:8px;}
+  .progress-wrap{margin-top:12px;}
+  .progress-track{
+    height:8px; border-radius:5px; background:var(--surface-2); overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .progress-fill{height:100%; background:var(--mustard); width:0%; transition:width .15s linear;}
+  .progress-label{font-size:11px; color:var(--paper-dim); margin-top:5px;}
+  .insufficient{font-size:12px; color:var(--coral); margin-top:8px;}
+  .empty{max-width:1280px; margin:40px auto; text-align:center; color:var(--paper-dim); font-size:14px;}
+
+  .play-overlay{
+    position:fixed; inset:0; background:rgba(8,9,18,0.9); z-index:60;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation:fadeIn .18s ease;
+  }
+  .play-panel{
+    width:100%; max-width:560px; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; overflow:hidden; animation:popIn .22s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .play-head{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--line);}
+  .play-head h3{margin:0; font-size:14px; font-weight:600;}
+  .play-stats{display:flex; gap:16px; font-size:12px; color:var(--paper-dim);}
+  .play-stats b{color:var(--mustard);}
+  .play-area{
+    position:relative; height:340px; overflow:hidden;
+    background:linear-gradient(160deg, #10132a, #1c2148);
+  }
+  .play-target{
+    position:absolute; width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;
+    animation:floatUp linear forwards;
+  }
+  @keyframes floatUp{ from{transform:translateY(0) scale(1); opacity:1;} to{transform:translateY(-320px) scale(.85); opacity:0;} }
+  .play-target.pop{animation:popTarget .25s ease forwards;}
+  @keyframes popTarget{ to{transform:scale(1.8); opacity:0;} }
+  .play-end{
+    position:absolute; inset:0; background:rgba(10,11,22,0.88);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  }
+  .play-end .score-big{font-size:32px; color:var(--mustard); font-weight:700;}
+  .play-foot{display:flex; align-items:center; justify-content:space-between; padding:14px 18px;}
+  .play-overlay.hidden{display:none;}
+
+  @media (max-width:640px){
+    .header-row{flex-direction:column; align-items:flex-start;}
+    .search-wrap{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <div class="logo">
+      <h1 class="display">PIXEL &amp; PLASTIQUE</h1>
+      <span class="mono">50 cartouches, classées dans le désordre</span>
+    </div>
+    <div class="header-actions">
+      <div class="credits-badge mono" id="creditsBadge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1 1-1.8 3-1.8s3 .8 3 1.8-1 1.3-3 1.8-3 .9-3 1.9 1 1.8 3 1.8 3-.8 3-1.8"/></svg>
+        <span id="creditsValue">1500</span>
+      </div>
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="text" placeholder="Chercher un titre...">
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tabShop">Boutique</button>
+  <button class="tab" id="tabLibrary">Ma bibliothèque <span class="tab-count mono" id="libCount">0</span></button>
+</div>
+
+<div class="toolbar">
+  <div class="chips" id="chips"></div>
+  <div class="toolbar-meta">
+    <span class="count mono" id="count"></span>
+    <select id="sort">
+      <option value="title">Trier : Titre (A-Z)</option>
+      <option value="rating">Trier : Meilleures notes</option>
+      <option value="price">Trier : Prix croissant</option>
+      <option value="year">Trier : Plus récents</option>
+    </select>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="empty hidden" id="empty"></div>
+
+<div class="pager" id="pager"></div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" id="modal"></div>
+</div>
+
+<div class="play-overlay hidden" id="playOverlay">
+  <div class="play-panel" id="playPanel"></div>
+</div>
+
+<script>
+const GENRES = [
+  { name:'Action', color:'#E8543E', icon:'sword' },
+  { name:'RPG', color:'#8B6FD8', icon:'wand' },
+  { name:'Puzzle', color:'#4FB3BF', icon:'puzzle' },
+  { name:'Course', color:'#E8A93E', icon:'flag' },
+  { name:'Plateforme', color:'#7FA383', icon:'footprint' },
+  { name:'Danse', color:'#E85394', icon:'dance' },
+  { name:'Horreur', color:'#A34659', icon:'ghost' },
+  { name:'Sport', color:'#3EA1E8', icon:'trophy' },
+  { name:'Combat', color:'#C9A227', icon:'fist' },
+  { name:'Aventure', color:'#5B7FBF', icon:'compass' },
+];
+
+const ICONS = {
+  sword:'<path d="M14.5 3.5 20.5 9.5 11 19 5 20 6 14 15.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  wand:'<path d="M4 20 15 9M17 3l1.2 2.3L20.5 6.5l-2.3 1.2L17 10l-1.2-2.3L13.5 6.5l2.3-1.2Z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  puzzle:'<path d="M6 6h5v2a2 2 0 1 0 0 4v2H6v-4a2 2 0 1 1 0-4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 6h7v7h-2a2 2 0 1 0 0 4h2v2h-7" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  flag:'<path d="M5 3v18M5 4h13l-3 4 3 4H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+  footprint:'<circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="15" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  dance:'<circle cx="12" cy="4.5" r="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v6M12 13l-4 5M12 13l5 3M12 9l-5-1M12 9l5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  ghost:'<path d="M6 20V11a6 6 0 1 1 12 0v9l-2-2-2 2-2-2-2 2-2-2Z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 5H5a3 3 0 0 0 3 5M16 5h3a3 3 0 0 1-3 5M10 15v3H8v2h8v-2h-2v-3" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+  fist:'<path d="M7 10V7a2 2 0 1 1 4 0v3M11 10V6a2 2 0 1 1 4 0v4M15 10V7a2 2 0 1 1 4 0v6a5 5 0 0 1-5 5H11a5 5 0 0 1-4-2l-3-4 1.5-1.5L7 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  compass:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15 9-2 6-6 2 2-6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+};
+
+const ADJ = ['Cramoisi','Silencieux','Gelé','Rogue','Néon','Brisé','Ferreux','Ombreux','Astral','Sauvage','Perdu','Antique','Solaire','Doré','Féral','Radiant','Sinistre','Electrique','Nomade','Vélours','Rouillé','Fantôme','Cristal','Arctique','Cuivré','Errant','Maudit','Stellaire','Fané','Rugissant','Vermeil'];
+const NOUN = ['Horizon','Vengeance','Légion','Dérive','Citadelle','Braise','Protocole','Vallée','Frontière','Descente','Requiem','Soulèvement','Sanctuaire','Voyage','Syndicat','Chroniques','Odyssée','Cartel','Bastion','Eclipse','Circuit','Royaume','Réacteur','Etendue','Pacte','Chaos','Labyrinthe','Colonie','Tempête','Seuil','Ressac','Genèse','Renégat'];
+const SUFFIX = ['','','','','II','III',' : Redux',' : Remastered',' : Origines'];
+const PLATFORMS = ['PC','PS5','Xbox','Switch'];
+
+function seeded(seed){ const x = Math.sin(seed*999.7)*10000; return x-Math.floor(x); }
+
+function buildCatalog(count){
+  const games=[];
+  for(let i=0;i<count;i++){
+    const adj = ADJ[Math.floor(seeded(i+1)*ADJ.length)];
+    const noun = NOUN[(i*7+Math.floor(seeded(i+51)*NOUN.length))%NOUN.length];
+    const suffix = SUFFIX[Math.floor(seeded(i+101)*SUFFIX.length)];
+    const genre = GENRES[Math.floor(seeded(i+151)*GENRES.length)];
+    const rating = Math.round((2.4+seeded(i+201)*2.6)*10)/10;
+    const price = Math.max(4.99, Math.round((9.99+seeded(i+251)*50)-0.01));
+    const year = 1998+Math.floor(seeded(i+301)*28);
+    const pCount = 1+Math.floor(seeded(i+351)*3);
+    const plats = [...PLATFORMS].sort((a,b)=>seeded(i+401+a.length)-seeded(i+401+b.length)).slice(0,pCount);
+    const hue = Math.floor(seeded(i+451)*360);
+    const online = seeded(i+601) > 0.45;
+    games.push({ id:i, title:`${adj} ${noun}${suffix}`, genre, rating, price, year, plats, hue, online });
+  }
+  return games;
+}
+
+const DESC_A = {
+  'Action':"Une avalanche de combats à mains nues et d'explosions chorégraphiées.",
+  'RPG':"Un monde à explorer, des choix qui comptent, et une réputation à bâtir.",
+  'Puzzle':"Des mécaniques simples qui deviennent vite redoutablement retorses.",
+  'Course':"De l'asphalte, des virages serrés et zéro tolérance pour la lenteur.",
+  'Plateforme':"Sauts millimétrés et niveaux qui punissent la moindre hésitation.",
+  'Danse':"Des enchaînements à reproduire au bon tempo, écran en pleine effervescence.",
+  'Horreur':"Une tension qui ne relâche jamais vraiment, même dans le silence.",
+  'Sport':"La compétition à l'état pur, sans temps mort.",
+  'Combat':"Des combos à apprendre par cœur et un roster qui ne cesse de grandir.",
+  'Aventure':"Un périple long, des rencontres marquantes, des retours en arrière.",
+};
+const DESC_B = ["Sorti dans une relative discrétion, il a fini par trouver son public.","Les critiques l'ont qualifié d'inégal mais mémorable.","Un classique de niche, culte pour qui l'a découvert au bon moment.","Techniquement daté, mais l'ambiance compense largement.","Une suite plus ambitieuse que l'original, pour le meilleur.","On y revient encore, des années après sa sortie."];
+
+function blurb(g){
+  const b = DESC_B[Math.floor(seeded(g.id+501)*DESC_B.length)];
+  return `${DESC_A[g.genre.name]} ${b}`;
+}
+
+const CATALOG = buildCatalog(50);
+let activeGenres = new Set();
+let search = '';
+let sortBy = 'title';
+let page = 1;
+const perPage = 24;
+const downloaded = new Set();
+let currentView = 'shop';
+let credits = 1500;
+let downloadTimer = null;
+let playState = null;
+
+function creditsCost(g){ return Math.round(g.price*10); }
+
+function updateCredits(){
+  document.getElementById('creditsValue').textContent = credits;
+}
+
+function updateLibCount(){
+  document.getElementById('libCount').textContent = downloaded.size;
+}
+
+document.getElementById('tabShop').addEventListener('click', ()=>{
+  currentView = 'shop'; page = 1;
+  document.getElementById('tabShop').classList.add('active');
+  document.getElementById('tabLibrary').classList.remove('active');
+  renderGrid();
+});
+document.getElementById('tabLibrary').addEventListener('click', ()=>{
+  currentView = 'library'; page = 1;
+  document.getElementById('tabLibrary').classList.add('active');
+  document.getElementById('tabShop').classList.remove('active');
+  renderGrid();
+});
+
+function renderChips(){
+  const wrap = document.getElementById('chips');
+  wrap.innerHTML = GENRES.map(g => `
+    <button class="chip" data-genre="${g.name}" style="color:${g.color}">
+      <span class="dot" style="background:${g.color}"></span>${g.name}
+    </button>
+  `).join('');
+  wrap.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const name = chip.dataset.genre;
+      if(activeGenres.has(name)) activeGenres.delete(name); else activeGenres.add(name);
+      chip.classList.toggle('active');
+      page = 1;
+      renderGrid();
+    });
+  });
+}
+
+function getFiltered(){
+  let base = currentView==='library' ? CATALOG.filter(g=>downloaded.has(g.id)) : CATALOG;
+  let list = base.filter(g => g.title.toLowerCase().includes(search.toLowerCase()));
+  if(activeGenres.size) list = list.filter(g => activeGenres.has(g.genre.name));
+  list = [...list].sort((a,b)=>{
+    if(sortBy==='title') return a.title.localeCompare(b.title,'fr');
+    if(sortBy==='rating') return b.rating-a.rating;
+    if(sortBy==='price') return a.price-b.price;
+    if(sortBy==='year') return b.year-a.year;
+    return 0;
+  });
+  return list;
+}
+
+function stars(rating){
+  const full = Math.round(rating);
+  let s='';
+  for(let i=1;i<=5;i++){
+    s += `<svg width="11" height="11" viewBox="0 0 24 24" fill="${i<=full?'#E8A93E':'none'}" stroke="#E8A93E" stroke-width="1.5"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>`;
+  }
+  return s;
+}
+
+function cardHTML(g, idx){
+  return `
+  <button class="card" data-id="${g.id}" aria-label="Voir ${g.title}" style="animation-delay:${Math.min(idx*30,600)}ms">
+    <div class="cover" style="border-left-color:${g.genre.color}; background:linear-gradient(135deg, hsl(${g.hue} 40% 22%), hsl(${(g.hue+40)%360} 35% 14%));">
+      <svg width="34" height="34" viewBox="0 0 24 24" style="color:${g.genre.color}">${ICONS[g.genre.icon]}</svg>
+      <span class="genre-tag">${g.genre.name}</span>
+      ${g.online ? `<span class="online-tag"><span class="online-dot"></span>En ligne</span>` : ''}
+    </div>
+    <div class="card-body">
+      <p class="card-title">${g.title}</p>
+      <p class="card-sub mono">${g.year}</p>
+      <div class="stars">${stars(g.rating)}</div>
+      <div class="row-between">
+        <span class="price mono">${creditsCost(g)} cr${downloaded.has(g.id)?' · téléchargé':''}</span>
+        <div class="plats">${g.plats.map(p=>`<span class="plat">${p}</span>`).join('')}</div>
+      </div>
+    </div>
+  </button>`;
+}
+
+function renderGrid(){
+  const filtered = getFiltered();
+  const totalPages = Math.max(1, Math.ceil(filtered.length/perPage));
+  if(page>totalPages) page = totalPages;
+  const items = filtered.slice((page-1)*perPage, page*perPage);
+
+  document.getElementById('count').textContent = `${filtered.length} résultat${filtered.length>1?'s':''}`;
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  if(items.length===0){
+    grid.innerHTML='';
+    empty.textContent = currentView==='library'
+      ? "Ta bibliothèque est vide. Ouvre un jeu dans la boutique et télécharge-le."
+      : "Aucune cartouche ne correspond à cette recherche. Essayez un autre titre ou genre.";
+    empty.classList.remove('hidden');
+  } else {
+    empty.classList.add('hidden');
+    grid.innerHTML = items.map((g,idx)=>cardHTML(g,idx)).join('');
+    grid.querySelectorAll('.card').forEach(c=>{
+      c.addEventListener('click', ()=> openModal(Number(c.dataset.id)));
+    });
+  }
+
+  const pager = document.getElementById('pager');
+  pager.innerHTML = `
+    <button id="prev" ${page<=1?'disabled':''} aria-label="Page précédente">&larr;</button>
+    <span class="mono">Page ${page} / ${totalPages}</span>
+    <button id="next" ${page>=totalPages?'disabled':''} aria-label="Page suivante">&rarr;</button>
+  `;
+  document.getElementById('prev').addEventListener('click', ()=>{ page--; renderGrid(); window.scrollTo({top:0,behavior:'smooth'}); });
+  document.getElementById('next').addEventListener('click', ()=>{ page++; renderGrid(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+
+function modalActionsHTML(g){
+  const isDownloaded = downloaded.has(g.id);
+  const cost = creditsCost(g);
+  if(isDownloaded){
+    return `
+      <div class="btn-row">
+        <button class="shelf-btn play" id="playBtn">Jouer</button>
+        <button class="ghost-btn" id="uninstallBtn">Désinstaller</button>
+      </div>`;
+  }
+  return `<button class="shelf-btn" id="downloadBtn">Télécharger — ${cost} cr</button>`;
+}
+
+function openModal(id){
+  const g = CATALOG.find(x=>x.id===id);
+  const overlay = document.getElementById('overlay');
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <div class="modal-cover" style="border-bottom-color:${g.genre.color}; background:linear-gradient(135deg, hsl(${g.hue} 40% 22%), hsl(${(g.hue+40)%360} 35% 14%));">
+      <svg width="54" height="54" viewBox="0 0 24 24" style="color:${g.genre.color}">${ICONS[g.genre.icon]}</svg>
+      <button class="modal-close" id="closeModal" aria-label="Fermer">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h2>${g.title}</h2>
+      <div class="modal-meta mono">${g.genre.name} · ${g.year} · ${g.plats.join(', ')}${g.online ? ' · En ligne' : ''}</div>
+      <div class="stars" style="margin-bottom:10px;">${stars(g.rating)}</div>
+      <p class="modal-desc">${blurb(g)}</p>
+      <div class="modal-foot">
+        <span class="price mono" style="font-size:16px;">${creditsCost(g)} cr</span>
+        <span id="modalActions">${modalActionsHTML(g)}</span>
+      </div>
+      <div id="modalExtra"></div>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+  bindModalActions(g);
+}
+
+function bindModalActions(g){
+  const downloadBtn = document.getElementById('downloadBtn');
+  if(downloadBtn){
+    downloadBtn.addEventListener('click', ()=> startDownload(g));
+  }
+  const playBtn = document.getElementById('playBtn');
+  if(playBtn){
+    playBtn.addEventListener('click', ()=>{ closeModal(); openPlay(g); });
+  }
+  const uninstallBtn = document.getElementById('uninstallBtn');
+  if(uninstallBtn){
+    uninstallBtn.addEventListener('click', ()=>{
+      downloaded.delete(g.id);
+      updateLibCount();
+      document.getElementById('modalActions').innerHTML = modalActionsHTML(g);
+      bindModalActions(g);
+      if(currentView==='library') renderGrid();
+    });
+  }
+}
+
+function startDownload(g){
+  const cost = creditsCost(g);
+  const extra = document.getElementById('modalExtra');
+  if(credits < cost){
+    extra.innerHTML = `<p class="insufficient">Crédits insuffisants (il te manque ${cost-credits} cr).</p>`;
+    return;
+  }
+  credits -= cost;
+  updateCredits();
+  const actions = document.getElementById('modalActions');
+  actions.innerHTML = `<button class="shelf-btn" id="downloadBtn" disabled>Téléchargement…</button>`;
+  extra.innerHTML = `
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label mono" id="progressLabel">0%</div>
+    </div>`;
+  let pct = 0;
+  clearInterval(downloadTimer);
+  downloadTimer = setInterval(()=>{
+    pct = Math.min(100, pct + 6 + Math.random()*10);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = Math.round(pct) + '%';
+    if(pct >= 100){
+      clearInterval(downloadTimer);
+      downloaded.add(g.id);
+      updateLibCount();
+      extra.innerHTML = '';
+      actions.innerHTML = modalActionsHTML(g);
+      bindModalActions(g);
+      if(currentView==='shop') renderGrid();
+    }
+  }, 160);
+}
+
+function closeModal(){
+  clearInterval(downloadTimer);
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+function openPlay(g){
+  const overlay = document.getElementById('playOverlay');
+  const panel = document.getElementById('playPanel');
+  panel.innerHTML = `
+    <div class="play-head">
+      <h3>${g.title}</h3>
+      <button class="modal-close" id="playClose" aria-label="Quitter">&times;</button>
+    </div>
+    <div class="play-area" id="playArea">
+      <div class="play-head" style="position:absolute; top:0; left:0; right:0; z-index:2; border:none; background:rgba(10,11,22,0.4);">
+        <span class="play-stats mono">Score <b id="playScore">0</b></span>
+        <span class="play-stats mono">Temps <b id="playTime">30</b>s</span>
+      </div>
+    </div>
+    <div class="play-foot">
+      <span class="mono" style="font-size:12px; color:var(--paper-dim);">Clique les icônes ${g.genre.name.toLowerCase()} avant qu'elles ne s'échappent.</span>
+      <button class="ghost-btn" id="playQuit">Quitter</button>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  document.getElementById('playClose').addEventListener('click', closePlay);
+  document.getElementById('playQuit').addEventListener('click', closePlay);
+  startPlaySession(g);
+}
+
+function startPlaySession(g){
+  stopPlaySession();
+  const area = document.getElementById('playArea');
+  playState = { score:0, timeLeft:30, spawnId:null, tickId:null };
+  playState.spawnId = setInterval(()=>spawnTarget(g, area), 650);
+  playState.tickId = setInterval(()=>{
+    playState.timeLeft--;
+    const timeEl = document.getElementById('playTime');
+    if(timeEl) timeEl.textContent = playState.timeLeft;
+    if(playState.timeLeft <= 0) endPlaySession(g);
+  }, 1000);
+}
+
+function spawnTarget(g, area){
+  if(!area) return;
+  const el = document.createElement('button');
+  el.className = 'play-target';
+  el.style.left = (10 + Math.random()*80) + '%';
+  el.style.bottom = '0px';
+  el.style.background = g.genre.color;
+  el.style.animationDuration = (2.2 + Math.random()*1) + 's';
+  el.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" style="color:#14172B">${ICONS[g.genre.icon]}</svg>`;
+  el.addEventListener('click', ()=>{
+    if(el.classList.contains('pop')) return;
+    playState.score++;
+    const scoreEl = document.getElementById('playScore');
+    if(scoreEl) scoreEl.textContent = playState.score;
+    el.classList.add('pop');
+    setTimeout(()=> el.remove(), 250);
+  });
+  el.addEventListener('animationend', (e)=>{ if(e.animationName!=='popTarget') el.remove(); });
+  area.appendChild(el);
+}
+
+function stopPlaySession(){
+  if(playState){
+    clearInterval(playState.spawnId);
+    clearInterval(playState.tickId);
+  }
+  playState = null;
+}
+
+function endPlaySession(g){
+  stopPlaySession();
+  const area = document.getElementById('playArea');
+  area.querySelectorAll('.play-target').forEach(t=>t.remove());
+  const end = document.createElement('div');
+  end.className = 'play-end';
+  end.innerHTML = `
+    <span class="mono" style="color:var(--paper-dim); font-size:12px;">Partie terminée</span>
+    <span class="score-big mono">${document.getElementById('playScore').textContent} pts</span>
+    <div class="btn-row">
+      <button class="shelf-btn play" id="replayBtn">Rejouer</button>
+      <button class="ghost-btn" id="endQuit">Quitter</button>
+    </div>
+  `;
+  area.appendChild(end);
+  document.getElementById('replayBtn').addEventListener('click', ()=>{ end.remove(); openPlay(g); });
+  document.getElementById('endQuit').addEventListener('click', closePlay);
+}
+
+function closePlay(){
+  stopPlaySession();
+  document.getElementById('playOverlay').classList.add('hidden');
+  document.getElementById('playPanel').innerHTML = '';
+}
+
+document.getElementById('search').addEventListener('input', (e)=>{
+  search = e.target.value; page = 1; renderGrid();
+});
+document.getElementById('sort').addEventListener('change', (e)=>{
+  sortBy = e.target.value; renderGrid();
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){
+    closeModal();
+    if(!document.getElementById('playOverlay').classList.contains('hidden')) closePlay();
+  }
+});
+
+renderChips();
+renderGrid();
+updateLibCount();
+updateCredits();
+</script>
+</body>
+</html>

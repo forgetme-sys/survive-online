@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#11140f" />
+    <title>PixelForge — Atelier de skin Minecraft</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="PixelForge, accueil">
+        <span class="brand-mark">P</span>
+        <span>pixel<span class="brand-accent">forge</span></span>
+      </a>
+      <div class="project-name">
+        <span class="status-dot"></span>
+        <span>Sans titre</span>
+        <span class="saved-label" id="saveStatus">Enregistré localement</span>
+      </div>
+      <div class="top-actions">
+        <button class="button button-quiet" id="importButton">Importer PNG</button>
+        <input id="importInput" type="file" accept="image/png,image/jpeg" hidden />
+        <button class="button button-primary" id="exportButton"><span aria-hidden="true">↓</span> Exporter le skin</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="tools-panel panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">TON ATELIER</p>
+            <h1>Créer un skin</h1>
+          </div>
+          <span class="size-badge">64 × 64</span>
+        </div>
+
+        <section class="tool-section">
+          <h2>Outils</h2>
+          <div class="tool-grid" role="toolbar" aria-label="Outils de dessin">
+            <button class="tool-button active" data-tool="pencil" aria-label="Crayon" title="Crayon (B)">
+              <span>✎</span><small>Crayon</small>
+            </button>
+            <button class="tool-button" data-tool="eraser" aria-label="Gomme" title="Gomme (E)">
+              <span>⌫</span><small>Gomme</small>
+            </button>
+            <button class="tool-button" data-tool="fill" aria-label="Pot de peinture" title="Pot de peinture (G)">
+              <span>▱</span><small>Remplir</small>
+            </button>
+            <button class="tool-button" data-tool="picker" aria-label="Pipette" title="Pipette (I)">
+              <span>⌖</span><small>Pipette</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="tool-section color-section">
+          <div class="section-title-row">
+            <h2>Couleur</h2>
+            <button class="text-button" id="resetColor" title="Réinitialiser la couleur">Réinitialiser</button>
+          </div>
+          <label class="color-well" for="colorInput">
+            <input id="colorInput" type="color" value="#68d391" />
+            <span id="colorHex">#68D391</span>
+            <span class="color-hint">Choisir</span>
+          </label>
+          <div class="palette" aria-label="Palette de couleurs">
+            <button class="swatch" style="--swatch:#f3f0e7" data-color="#f3f0e7" aria-label="Crème"></button>
+            <button class="swatch" style="--swatch:#22252b" data-color="#22252b" aria-label="Anthracite"></button>
+            <button class="swatch" style="--swatch:#f87171" data-color="#f87171" aria-label="Rouge"></button>
+            <button class="swatch" style="--swatch:#fb923c" data-color="#fb923c" aria-label="Orange"></button>
+            <button class="swatch" style="--swatch:#facc15" data-color="#facc15" aria-label="Jaune"></button>
+            <button class="swatch" style="--swatch:#68d391" data-color="#68d391" aria-label="Vert"></button>
+            <button class="swatch" style="--swatch:#38bdf8" data-color="#38bdf8" aria-label="Bleu clair"></button>
+            <button class="swatch" style="--swatch:#818cf8" data-color="#818cf8" aria-label="Indigo"></button>
+            <button class="swatch" style="--swatch:#c084fc" data-color="#c084fc" aria-label="Violet"></button>
+            <button class="swatch" style="--swatch:#ec4899" data-color="#ec4899" aria-label="Rose"></button>
+            <button class="swatch" style="--swatch:#a16207" data-color="#a16207" aria-label="Marron"></button>
+            <button class="swatch transparent-swatch" data-color="transparent" aria-label="Transparent"></button>
+          </div>
+        </section>
+
+        <section class="tool-section uv-help">
+          <div class="section-title-row">
+            <h2>Texture UV</h2>
+            <span class="tiny-label">64 × 64 PX</span>
+          </div>
+          <p class="layer-note">Chaque zone de la grille correspond à une face du personnage. Les cadres bleus indiquent les zones extérieures (chapeau, veste, manches).</p>
+        </section>
+
+        <section class="tool-section history-section">
+          <h2>Historique</h2>
+          <div class="history-actions">
+            <button class="button button-outline" id="undoButton" disabled>↶ Annuler</button>
+            <button class="button button-outline" id="redoButton" disabled>↷ Rétablir</button>
+          </div>
+        </section>
+
+        <div class="tip-card">
+          <span class="tip-icon">✦</span>
+          <p><strong>Astuce</strong> — Dessine directement sur la grille, puis admire ton skin en mouvement.</p>
+        </div>
+      </aside>
+
+      <section class="editor-panel panel" aria-label="Éditeur de skin">
+        <div class="editor-toolbar">
+          <div class="editor-title">
+            <span class="editor-icon">▦</span>
+            <div><h2>Éditeur UV</h2><p>Texture Minecraft · 64 × 64 px</p></div>
+          </div>
+          <div class="zoom-controls">
+            <button class="icon-button" id="zoomOut" aria-label="Dézoomer">−</button>
+            <span id="zoomLabel">800%</span>
+            <button class="icon-button" id="zoomIn" aria-label="Zoomer">+</button>
+            <span class="toolbar-divider"></span>
+            <button class="icon-button grid-toggle active" id="gridToggle" aria-label="Afficher ou masquer la grille" title="Afficher ou masquer la grille">▦</button>
+          </div>
+        </div>
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="skinCanvas" width="512" height="512" aria-label="Grille de dessin du skin Minecraft"></canvas>
+            <canvas id="gridCanvas" width="512" height="512" aria-hidden="true"></canvas>
+          </div>
+        </div>
+        <div class="canvas-footer">
+          <span><i class="legend-dot base-dot"></i>Base <i class="legend-dot outer-dot"></i>Extérieur</span>
+          <span id="cursorPosition">Survole la grille pour voir les coordonnées</span>
+        </div>
+      </section>
+
+      <aside class="preview-panel panel">
+        <div class="preview-heading">
+          <div><p class="eyebrow">APERÇU EN DIRECT</p><h2>Ton personnage</h2></div>
+          <button class="icon-button fullscreen-button" id="resetPreview" title="Réinitialiser l’animation" aria-label="Réinitialiser l’animation">⟳</button>
+        </div>
+        <div class="avatar-stage">
+          <div class="stage-glow"></div>
+          <canvas id="previewCanvas" width="300" height="370" aria-label="Aperçu animé du personnage"></canvas>
+          <span class="stage-label">APERÇU 2D</span>
+        </div>
+        <div class="animation-controls">
+          <div class="section-title-row">
+            <h2>Animation</h2>
+            <span class="live-badge"><i></i> EN DIRECT</span>
+          </div>
+          <div class="animation-tabs" role="tablist" aria-label="Choisir une animation">
+            <button class="animation-tab active" data-animation="idle" role="tab" aria-selected="true"><span>◉</span>Repos</button>
+            <button class="animation-tab" data-animation="walk" role="tab" aria-selected="false"><span>↗</span>Marche</button>
+            <button class="animation-tab" data-animation="run" role="tab" aria-selected="false"><span>➜</span>Course</button>
+          </div>
+          <label class="speed-control">
+            <span>Vitesse</span>
+            <input id="speedInput" type="range" min="1" max="10" value="5" />
+            <span id="speedValue">5</span>
+          </label>
+        </div>
+        <div class="preview-footer"><span class="keyboard-key">PNG</span><span>Compatible Minecraft Java & Bedrock</span></div>
+      </aside>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

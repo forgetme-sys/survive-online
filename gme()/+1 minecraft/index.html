@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#11131c">
+    <meta name="description" content="Un jeu incrémental au clavier : gagne des points, monte de niveau et explore trois mondes.">
+    <title>+1 — Le jeu du clavier</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell" id="game">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="+1, accueil">
+          <span class="brand-mark" aria-hidden="true">+1</span>
+          <span class="brand-name">KEY<span>QUEST</span></span>
+        </a>
+        <div class="player-chip" aria-label="Votre niveau">
+          <span class="player-dot" aria-hidden="true"></span>
+          <span>NIVEAU <strong id="level-label">1</strong></span>
+        </div>
+      </header>
+
+      <section class="game-layout" aria-labelledby="game-title">
+        <div class="game-main">
+          <div class="game-heading">
+            <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> TON AVENTURE COMMENCE ICI</p>
+            <h1 id="game-title">Chaque touche<br>te fait avancer<span>.</span></h1>
+            <p class="intro-copy">Un tap. Un point. Trois mondes à explorer.</p>
+          </div>
+
+          <section class="arena" id="arena" aria-label="Personnage dans le monde sélectionné">
+            <div class="arena-sun" aria-hidden="true"></div>
+            <div class="arena-mountains" aria-hidden="true"></div>
+            <div class="arena-stars" aria-hidden="true"></div>
+            <div class="avatar-wrap" aria-hidden="true">
+              <div class="avatar avatar-steve" id="avatar">
+                <span class="avatar-head"><span class="avatar-face"></span></span>
+                <span class="avatar-body"></span>
+                <span class="avatar-arm avatar-arm-left"></span>
+                <span class="avatar-arm avatar-arm-right"></span>
+                <span class="avatar-leg avatar-leg-left"></span>
+                <span class="avatar-leg avatar-leg-right"></span>
+              </div>
+              <span class="avatar-shadow"></span>
+            </div>
+            <div class="arena-platform" aria-hidden="true"></div>
+            <div class="arena-label">
+              <span class="world-icon" id="world-icon" aria-hidden="true">✦</span>
+              <span><small>MONDE ACTUEL</small><strong id="current-world">Prairie paisible</strong></span>
+            </div>
+            <span class="arena-coordinate" aria-hidden="true">ZONE 01 / 03</span>
+          </section>
+
+          <div class="play-area">
+            <div class="score-block">
+              <span class="stat-label">TES POINTS</span>
+              <strong class="score-value" id="score">0</strong>
+              <span class="score-caption"><span class="score-spark" aria-hidden="true">✦</span> points récoltés</span>
+            </div>
+            <button class="tap-button" id="tap-button" type="button">
+              <span class="tap-icon" aria-hidden="true">＋</span>
+              <span>GAGNER <strong>+1</strong></span>
+              <span class="tap-key" aria-hidden="true">ESPACE</span>
+            </button>
+            <p class="keyboard-hint" id="keyboard-hint"><span aria-hidden="true">⌨</span> Appuie sur n’importe quelle touche pour jouer</p>
+          </div>
+
+          <section class="progress-card" aria-label="Progression du niveau">
+            <div class="progress-topline">
+              <div><span class="stat-label">PROCHAIN NIVEAU</span><strong id="next-level-label">Niveau 2</strong></div>
+              <span class="progress-count" id="level-progress-label">0 / 25 XP</span>
+            </div>
+            <div class="progress-track" id="progress-track" role="progressbar" aria-label="Progression vers le prochain niveau" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0">
+              <span class="progress-fill" id="progress-fill"></span>
+            </div>
+          </section>
+        </div>
+
+        <aside class="game-sidebar">
+          <section class="sidebar-section worlds-section" aria-labelledby="worlds-title">
+            <div class="section-heading">
+              <div><p class="section-kicker">EXPLORE</p><h2 id="worlds-title">Les mondes</h2></div>
+              <span class="section-counter">03</span>
+            </div>
+            <div class="world-list" id="world-list">
+              <button class="world-card world-meadow is-selected" type="button" data-world="meadow" aria-pressed="true">
+                <span class="world-art" aria-hidden="true"><span class="world-art-sun"></span><span class="world-art-hill"></span></span>
+                <span class="world-info"><strong>Prairie paisible</strong><small>MONDE 01 · DÉBLOQUÉ</small></span>
+                <span class="world-status" aria-hidden="true">✓</span>
+              </button>
+              <button class="world-card world-desert is-locked" type="button" data-world="desert" aria-pressed="false" disabled>
+                <span class="world-art" aria-hidden="true"><span class="world-art-sun"></span><span class="world-art-hill"></span></span>
+                <span class="world-info"><strong>Désert doré</strong><small>MONDE 02 · 50 POINTS</small></span>
+                <span class="world-status" aria-hidden="true">⌑</span>
+              </button>
+              <button class="world-card world-neon is-locked" type="button" data-world="neon" aria-pressed="false" disabled>
+                <span class="world-art" aria-hidden="true"><span class="world-art-sun"></span><span class="world-art-hill"></span></span>
+                <span class="world-info"><strong>Néon nocturne</strong><small>MONDE 03 · 150 POINTS</small></span>
+                <span class="world-status" aria-hidden="true">⌑</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="sidebar-section skins-section" aria-labelledby="skins-title">
+            <div class="section-heading">
+              <div><p class="section-kicker">PERSONNALISE</p><h2 id="skins-title">Mes skins</h2></div>
+              <span class="skin-total" id="skin-total">1 / 4</span>
+            </div>
+            <div class="skin-list" id="skin-list" aria-label="Choisir un skin">
+              <button class="skin-card is-selected" type="button" data-skin="steve" aria-pressed="true" aria-label="Choisir Steve">
+                <span class="skin-mini skin-mini-steve" aria-hidden="true"><i></i></span><span class="skin-name">Steve</span><span class="skin-requirement skin-lock" aria-hidden="true">✓</span>
+              </button>
+              <button class="skin-card is-locked" type="button" data-skin="creeper" aria-pressed="false" aria-label="Skin Creeper, débloqué à 20 points">
+                <span class="skin-mini skin-mini-creeper" aria-hidden="true"><i></i></span><span class="skin-name">Creeper</span><span class="skin-requirement">20</span>
+              </button>
+              <button class="skin-card is-locked" type="button" data-skin="enderman" aria-pressed="false" aria-label="Skin Enderman, débloqué à 60 points">
+                <span class="skin-mini skin-mini-enderman" aria-hidden="true"><i></i></span><span class="skin-name">Enderman</span><span class="skin-requirement">60</span>
+              </button>
+              <button class="skin-card is-locked" type="button" data-skin="astronaut" aria-pressed="false" aria-label="Skin Astronaute, débloqué à 120 points">
+                <span class="skin-mini skin-mini-astronaut" aria-hidden="true"><i></i></span><span class="skin-name">Astronaute</span><span class="skin-requirement">120</span>
+              </button>
+            </div>
+          </section>
+
+          <div class="save-note" id="save-status" role="status" aria-live="polite">
+            <span class="save-icon" aria-hidden="true">↥</span>
+            Ta progression est sauvegardée sur cet appareil.
+          </div>
+        </aside>
+      </section>
+      <footer class="game-footer"><span>+1 KEYQUEST</span><span>FAIT POUR LES DOIGTS RAPIDES <span aria-hidden="true">✳</span></span></footer>
+    </main>
+  </body>
+</html>

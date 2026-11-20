@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hacker Terminal</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;background:#000;color:#00ff41;
+font-family:Consolas,monospace;height:100vh;overflow:hidden
+}
+body:after{
+content:"";position:fixed;inset:0;pointer-events:none;
+background:repeating-linear-gradient(
+0deg,transparent 0,transparent 3px,#00ff4108 4px
+)
+}
+header{
+height:65px;border-bottom:1px solid #00ff41;
+display:flex;align-items:center;justify-content:space-between;
+padding:0 20px;background:#020702
+}
+h1{font-size:24px;margin:0;text-shadow:0 0 15px #00ff41}
+#clock{font-size:14px}
+main{height:calc(100vh - 65px);padding:15px}
+#terminal{
+height:calc(100% - 58px);
+border:1px solid #00ff41;
+padding:15px;overflow:auto;
+background:#010401;
+box-shadow:0 0 25px #00ff4133
+}
+.line{margin:3px 0;white-space:pre-wrap}
+.ok{color:#00ff41}
+.warn{color:#ffff00}
+.err{color:#ff3333}
+.info{color:#00ccff}
+#input{
+height:45px;display:flex;align-items:center;margin-top:10px
+}
+#prompt{margin-right:8px}
+input{
+flex:1;background:#000;color:#00ff41;
+border:1px solid #00ff41;outline:0;
+padding:10px;font:inherit
+}
+button{
+margin-left:8px;padding:10px 20px;
+background:#001b05;color:#00ff41;
+border:1px solid #00ff41;
+font:inherit;cursor:pointer
+}
+button:hover{
+background:#00ff41;color:#000
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>☠ HACKER TERMINAL</h1>
+<div id="clock"></div>
+</header>
+
+<main>
+<div id="terminal"></div>
+
+<div id="input">
+<span id="prompt">&gt;</span>
+<input id="command" autocomplete="off"
+placeholder="Tape une commande...">
+<button onclick="executeCommand()">EXECUTE</button>
+</div>
+</main>
+
+<script>
+
+const terminal=document.getElementById("terminal");
+const command=document.getElementById("command");
+const clock=document.getElementById("clock");
+
+/* HORLOGE */
+
+setInterval(()=>{
+    clock.textContent=new Date().toLocaleTimeString();
+},1000);
+
+
+/* COMMANDES DE BASE */
+
+const commands={
+help:"Affiche la liste des commandes.",
+clear:"Nettoie le terminal.",
+scan:"Lance un scan fictif.",
+hack:"Lance une simulation hacker.",
+decrypt:"Décryptage fictif.",
+encrypt:"Chiffrement fictif.",
+status:"Affiche le statut du système.",
+system:"Informations système fictives.",
+cpu:"Informations CPU fictives.",
+ram:"Informations RAM fictives.",
+disk:"Informations disque fictives.",
+process:"Liste des processus fictifs.",
+users:"Liste des utilisateurs fictifs.",
+files:"Liste des fichiers fictifs.",
+logs:"Affiche les journaux fictifs.",
+firewall:"État du pare-feu fictif.",
+security:"Analyse de sécurité fictive.",
+network:"Commande désactivée dans cette simulation.",
+matrix:"Active l'effet Matrix.",
+date:"Affiche la date.",
+time:"Affiche l'heure.",
+version:"Version du terminal.",
+about:"Informations sur le programme.",
+echo:"Affiche un message.",
+whoami:"Affiche l'utilisateur fictif.",
+pwd:"Affiche le dossier fictif.",
+ls:"Liste le contenu fictif.",
+mkdir:"Crée un dossier fictif.",
+touch:"Crée un fichier fictif.",
+cat:"Affiche un fichier fictif.",
+history:"Affiche l'historique.",
+reboot:"Simulation de redémarrage.",
+shutdown:"Simulation d'arrêt.",
+logout:"Simulation de déconnexion."
+};
+
+
+/* AJOUT AUTOMATIQUE DE PLUS DE 300 COMMANDES */
+
+const groups=[
+"scan","system","security","file","crypto",
+"admin","debug","memory","process","server",
+"database","kernel","console","terminal",
+"monitor","audit","engine","data","code",
+"security","access","control","diagnostic"
+];
+
+for(let i=0;i<320;i++){
+
+    const group=groups[i%groups.length];
+    const name=group+"_"+String(i+1).padStart(3,"0");
+
+    commands[name]="Commande de simulation "+name+".";
+}
+
+
+/* AFFICHER */
+
+function print(text="",type="line"){
+
+    const div=document.createElement("div");
+
+    div.className=type;
+
+    div.textContent=text;
+
+    terminal.appendChild(div);
+
+    terminal.scrollTop=terminal.scrollHeight;
+}
+
+
+/* ATTENTE */
+
+function wait(ms){
+    return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+
+/* HELP */
+
+function showHelp(){
+
+    print("======================================","info");
+    print("       300+ COMMANDES DISPONIBLES","info");
+    print("======================================","info");
+
+    const names=Object.keys(commands);
+
+    names.forEach((name,index)=>{
+        print(
+            String(index+1).padStart(3,"0")+
+            "  "+name+
+            "  -  "+commands[name]
+        );
+    });
+}
+
+
+/* SCAN */
+
+async function scan(){
+
+    const lines=[
+        "[SCAN] Initialisation...",
+        "[SCAN] Analyse des données fictives...",
+        "[SCAN] Vérification des fichiers...",
+        "[SCAN] Analyse des permissions...",
+        "[SCAN] Recherche terminée.",
+        "[OK] Aucun système réel contacté."
+    ];
+
+    for(const line of lines){
+
+        print(line);
+
+        await wait(300);
+    }
+}
+
+
+/* HACK */
+
+async function hack(){
+
+    const lines=[
+        "[HACK] Simulation démarrée...",
+        "[HACK] Analyse de sécurité...",
+        "[HACK] Test virtuel 01...",
+        "[HACK] Test virtuel 02...",
+        "[HACK] Test virtuel 03...",
+        "[HACK] Simulation terminée.",
+        "[OK] Aucun système réel attaqué."
+    ];
+
+    for(const line of lines){
+
+        print(line,"warn");
+
+        await wait(350);
+    }
+}
+
+
+/* DECRYPT */
+
+async function decrypt(){
+
+    print("[DECRYPT] Préparation...");
+
+    for(let i=0;i<=100;i+=10){
+
+        print("[DECRYPT] "+i+"%");
+
+        await wait(100);
+    }
+
+    print("[OK] Décryptage fictif terminé.");
+}
+
+
+/* ENCRYPT */
+
+async function encrypt(){
+
+    print("[ENCRYPT] Chiffrement fictif...");
+
+    for(let i=0;i<=100;i+=20){
+
+        print("[ENCRYPT] "+i+"%");
+
+        await wait(150);
+    }
+
+    print("[OK] Chiffrement terminé.");
+}
+
+
+/* MATRIX */
+
+function matrix(){
+
+    print("01001000 01000001 01000011 01001011");
+
+    for(let i=0;i<10;i++){
+
+        print(
+            Math.random().toString(2).substring(2,18)
+        );
+    }
+}
+
+
+/* EXECUTION */
+
+async function executeCommand(){
+
+    const input=command.value.trim();
+
+    if(!input)return;
+
+    const parts=input.split(" ");
+
+    const cmd=parts[0].toLowerCase();
+
+    const args=parts.slice(1).join(" ");
+
+    print("> "+input);
+
+    command.value="";
+
+
+    if(cmd==="help"){
+
+        showHelp();
+
+    }
+
+    else if(cmd==="clear"){
+
+        terminal.innerHTML="";
+
+    }
+
+    else if(cmd==="scan"){
+
+        await scan();
+
+    }
+
+    else if(cmd==="hack"){
+
+        await hack();
+
+    }
+
+    else if(cmd==="decrypt"){
+
+        await decrypt();
+
+    }
+
+    else if(cmd==="encrypt"){
+
+        await encrypt();
+
+    }
+
+    else if(cmd==="matrix"){
+
+        matrix();
+
+    }
+
+    else if(cmd==="date"){
+
+        print(new Date().toLocaleDateString());
+
+    }
+
+    else if(cmd==="time"){
+
+        print(new Date().toLocaleTimeString());
+
+    }
+
+    else if(cmd==="echo"){
+
+        print(args);
+
+    }
+
+    else if(cmd==="history"){
+
+        print("Historique disponible dans cette simulation.");
+
+    }
+
+    else if(cmd==="network"){
+
+        print(
+            "[INFO] Les fonctions réseau sont désactivées.",
+            "warn"
+        );
+
+    }
+
+    else if(commands[cmd]){
+
+        print("[EXEC] "+commands[cmd]);
+
+        await wait(250);
+
+        print("[OK] Commande terminée.");
+
+    }
+
+    else{
+
+        print(
+            "[ERROR] Commande inconnue : "+cmd,
+            "err"
+        );
+
+        print("Tape help pour voir les commandes.");
+
+    }
+}
+
+
+/* ENTREE */
+
+command.addEventListener("keydown",e=>{
+
+    if(e.key==="Enter"){
+
+        executeCommand();
+
+    }
+
+});
+
+
+/* MESSAGE INITIAL */
+
+print("======================================","info");
+print("          HACKER TERMINAL v3.0","info");
+print("======================================","info");
+print("300+ commandes chargées.");
+print("Tape help pour afficher toutes les commandes.");
+print("Mode simulation hors ligne.");
+print("");
+
+</script>
+
+</body>
+</html>

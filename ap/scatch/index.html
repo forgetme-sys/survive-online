@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scratch</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <p class="eyebrow">Bienvenue</p>
+        <h1>Mon espace de projets</h1>
+        <p class="description">
+          Clique sur le bouton pour ouvrir ton espace de création.
+        </p>
+
+        <button id="actionButton" type="button">Clique-moi</button>
+      </section>
+
+      <section id="creationArea" class="card creation-area" hidden>
+        <p class="eyebrow">Nouvelle création</p>
+        <h2>Créer un projet</h2>
+        <form id="projectForm">
+          <label for="projectName">Nom du projet</label>
+          <input
+            id="projectName"
+            name="projectName"
+            type="text"
+            placeholder="Ex. Mon premier site"
+            required
+            maxlength="60"
+          />
+
+          <label for="projectDescription">Description</label>
+          <textarea
+            id="projectDescription"
+            name="projectDescription"
+            rows="3"
+            placeholder="Qu'est-ce que tu veux créer ?"
+            maxlength="240"
+          ></textarea>
+
+          <button type="submit">Créer mon projet</button>
+        </form>
+        <p id="message" class="message" aria-live="polite"></p>
+      </section>
+
+      <section id="projectsSection" class="projects-section" hidden>
+        <h2>Mes projets</h2>
+        <div id="projectsList" class="projects-list"></div>
+      </section>
+
+      <section id="workspace" class="workspace card" hidden>
+        <div class="workspace-header">
+          <div>
+            <p class="eyebrow">Espace de programmation</p>
+            <h2 id="workspaceTitle"></h2>
+          </div>
+          <button id="backButton" class="secondary-button" type="button">
+            Retour aux projets
+          </button>
+        </div>
+
+        <div class="code-editors">
+          <label>
+            HTML
+            <textarea id="htmlCode" class="code-input" rows="12" spellcheck="false" aria-label="Code HTML"></textarea>
+          </label>
+          <label>
+            CSS
+            <textarea id="cssCode" class="code-input" rows="12" spellcheck="false" aria-label="Code CSS"></textarea>
+          </label>
+          <label>
+            JavaScript
+            <textarea id="jsCode" class="code-input" rows="12" spellcheck="false" aria-label="Code JavaScript"></textarea>
+          </label>
+        </div>
+
+        <section class="ai-panel" aria-labelledby="aiHeading">
+          <div>
+            <p class="eyebrow">Assistant de programmation</p>
+            <h3 id="aiHeading">Que veux-tu créer ou modifier ?</h3>
+            <p class="ai-help">
+              Décris le changement en français. L’assistant pourra modifier ton HTML, ton CSS et ton JavaScript.
+            </p>
+            <p class="ai-help">
+              Pour l’activer, configure une clé Gemini dans le fichier <code>.env</code>, lance <code>start-ai.cmd</code>, puis ouvre le site à l’adresse <code>http://127.0.0.1:3000</code>.
+            </p>
+          </div>
+          <form id="aiForm">
+            <label class="visually-hidden" for="aiPrompt">Ta demande pour l’assistant IA</label>
+            <textarea
+              id="aiPrompt"
+              rows="3"
+              maxlength="2000"
+              placeholder="Ex. Ajoute un titre coloré et un bouton qui change le texte quand on clique."
+              required
+            ></textarea>
+            <button id="aiSubmit" type="submit">Demander à l’IA</button>
+          </form>
+          <p id="aiStatus" class="message" role="status" aria-live="polite"></p>
+        </section>
+
+        <div class="preview-header">
+          <h3>Aperçu</h3>
+          <button id="runButton" type="button">Enregistrer et exécuter</button>
+        </div>
+        <iframe id="preview" title="Aperçu du projet" sandbox="allow-scripts"></iframe>
+        <p id="workspaceMessage" class="message" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
